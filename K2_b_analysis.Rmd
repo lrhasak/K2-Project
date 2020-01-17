@@ -1,0 +1,162 @@
+---
+title: "K2_Behavioral_T1"
+author: "Lindsey Hasak"
+date: "1/14/2020"
+output: pdf_document
+---
+
+
+```{r setup, include=FALSE}
+# load libraries
+knitr::opts_chunk$set(echo = TRUE)
+library(psych)
+library(lubridate)
+library(knitr)
+library(kableExtra)
+library(ggpubr)
+library(tidyverse)
+```
+
+## Load and recode; summary statistics
+```{r data cleaning, echo = FALSE, message = FALSE}
+# load the data and indicate how NAs are entered
+b_data <- read_csv("K2Behavioral_T1.csv", col_names = TRUE, na = c("N/A"))
+
+
+b_clean <- b_data %>% 
+  # rename columns to be consistent and r friendly
+  rename(part_id = `Participant ID`,
+         examiner = `Examiner Name(s)`,
+         grade = `Grade`,
+         handedness = `Handedness`,
+         ctopp_c = `CTOPP Color - Raw Score`,
+         ctopp_l = `CTOPP Letter - Raw Score`,
+         towre_swe = `TOWRE - SWE Raw Score (Final)`,
+         towre_pde = `TOWRE - PDE Raw (Final)`,
+         wj_num = `W-J - Number Correct (Final)`) %>% 
+  # separate age column into year, month, and day columns
+  separate(col = Age,
+           into = c("year", "month", "day"),
+           sep = "-") %>% # indicate separating character
+  # separate grade column into grade and months in grade
+  separate(col = grade,
+           into = c("grade", "g_month"),
+           sep = "_") %>% 
+  # get rid of the notes column for now
+  select(- Notes) %>% 
+  # convert most columns to doubles (numeric values)
+  type_convert()
+  
+# now age back as new column in decimals
+b_clean$age <- b_clean$year + (b_clean$month/12) + (b_clean$day/365)
+
+# and finally look at data structure
+head(b_clean)
+```
+
+
+```{r describe stats, message = FALSE, echo = FALSE, warning = FALSE}
+# deselect unecessary columns and get summary statistics
+b_clean_descr <- b_clean %>% 
+  select(- part_id,
+         - examiner,
+         - handedness,
+         - year,
+         - month,
+         - day) 
+# put output in a nice table
+b_clean_descr <- data.frame(describe(b_clean_descr))
+
+# kable is a simple table generator
+kable(b_clean_descr, 
+      digits = 3, # 3 digits (or however many you want)
+      format = "latex", 
+      caption = "K2 Behavioral Descriptive Statistics") %>% 
+  kable_styling(latex_options = c("striped", "scale_down")) # from the kableExtra package
+```
+
+
+# Visualization
+
+
+## Histograms
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
+# CTOPP C
+p1 <- ggplot(b_clean, aes(ctopp_c)) +
+  geom_histogram(bins = 20) +
+  theme_classic() 
+
+# CTOPP L
+p2 <- ggplot(b_clean, aes(ctopp_l)) +
+  geom_histogram(bins = 20) +
+  theme_classic() 
+
+
+# TOWRE_SWE
+p3 <- ggplot(b_clean, aes(towre_swe)) +
+  geom_histogram(bins = 20)  +
+  theme_classic() 
+
+
+# TOWRE_PDE
+p4 <- ggplot(b_clean, aes(towre_pde)) +
+  geom_histogram(bins = 20) +
+  theme_classic() 
+
+
+# WJ_NUM
+p5 <- ggplot(b_clean, aes(wj_num)) +
+  geom_histogram(bins = 20) +
+  theme_classic() 
+
+# combine all into one plot for easy viewing
+hist <- ggarrange(p1, p2, p3, p4, p5,
+                  ncol = 2,
+                  nrow = 3)
+hist
+```
+
+
+## Scatterplots 
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
+# ctopp_c
+s1 <- ggplot(b_clean, aes(age, ctopp_c)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "lm", se = FALSE) +
+  theme_classic()
+
+# ctopp_l
+s2 <- ggplot(b_clean, aes(age, ctopp_l)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "lm", se = FALSE) +
+  theme_classic()
+
+
+# towre_swe
+s3 <- ggplot(b_clean, aes(age, towre_swe)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "lm", se = FALSE) +
+  theme_classic()
+
+
+# towre_pde
+s4 <- ggplot(b_clean, aes(age, towre_pde)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "lm", se = FALSE) +
+  theme_classic()
+
+
+# wj_num
+s5 <- ggplot(b_clean, aes(age, wj_num)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "lm", se = FALSE) +
+  theme_classic()
+
+scatter <- ggarrange(s1, s2, s3, s4, s5,
+                  ncol = 2,
+                  nrow = 3)
+scatter
+
+```
+
+ 
