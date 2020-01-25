@@ -164,7 +164,7 @@ hp_cl
 
 ### CTOPP Boxplots
 
-```{r ctopp boxplots, echo = FALSE, message = FALSE}
+```{r ctopp boxplots, echo = FALSE, message = FALSE, warning = FALSE}
 b_cc1 <- ggplot(b_clean, aes(grade, ctopp_c_raw), fill = grade) +
   geom_boxplot(aes(fill = grade),
                alpha = 0.5) +
@@ -221,7 +221,7 @@ box_c
 ```
 ### CTOPP Scatterplots 
 
-```{r ctopp scatterplots, echo = FALSE, message = FALSE}
+```{r ctopp scatterplots, echo = FALSE, message = FALSE, warning = FALSE}
 
 # ctopp color plots
 s_cc1 <- ggplot(b_clean, aes(age, ctopp_c_raw, color = grade)) +
@@ -264,7 +264,7 @@ scatter_c
 
 ### TOWRE Histograms
 
-```{r towre swe hist, echo = FALSE, message = FALSE}
+```{r towre swe hist, echo = FALSE, message = FALSE, warning = FALSE}
 # TOWRE_SWE 
 h_ts1 <- ggplot(b_clean, aes(swe_raw)) +
   geom_histogram(aes( y = ..density..),
@@ -301,7 +301,7 @@ h_ts3 <- ggplot(b_clean, aes(swe_grade)) +
 ```
 
 
-```{r towre pde hist,  echo = FALSE, message = FALSE}
+```{r towre pde hist,  echo = FALSE, message = FALSE, warning = FALSE}
 
 # TOWRE_PDE
 h_tp1 <- ggplot(b_clean, aes(pde_raw)) +
@@ -341,9 +341,10 @@ hist_t <- ggarrange(h_ts1, h_tp1, h_ts2, h_tp2, h_ts3, h_tp3,
                     common.legend = TRUE)
 hist_t
 ```
+
 ### TOWRE Boxplots 
 
-```{r towre swe boxplots, echo = FALSE}
+```{r towre swe boxplots, echo = FALSE, warning = FALSE}
 b_ts1 <- ggplot(b_clean, aes(grade, swe_raw), fill = grade) +
   geom_boxplot(aes(fill = grade),
                alpha = 0.5) +
@@ -379,7 +380,7 @@ b_ts3 <- ggplot(b_clean, aes(grade, swe_grade), fill = grade) +
   theme_classic()
 ```
 
-```{r towre pde boxplots, echo = FALSE}
+```{r towre pde boxplots, echo = FALSE, warning = FALSE}
 b_tp1 <- ggplot(b_clean, aes(grade, pde_raw), fill = grade) +
   geom_boxplot(aes(fill = grade),
                alpha = 0.5) +
@@ -415,7 +416,7 @@ b_tp3 <- ggplot(b_clean, aes(grade, pde_grade), fill = grade) +
   theme_classic()
 ```
 
-```{r towre boxplot figure, echo = FALSE, fig.height = 6}
+```{r towre boxplot figure, echo = FALSE, fig.height = 6, warning = FALSE}
 box_t <- ggarrange(b_ts1, b_tp1, b_ts2, b_tp2, b_ts3, b_tp3,
                   ncol = 2,
                   nrow = 3,
@@ -425,7 +426,7 @@ box_t
 
 
 ### TOWRE Scatterplots
-```{r towre swe scatterplots,  echo = FALSE, message = FALSE}
+```{r towre swe scatterplots,  echo = FALSE, message = FALSE, warning = FALSE}
 # SWE plots
 t1 <- ggplot(b_clean, aes(age, swe_raw, color = grade)) +
   geom_point(alpha = 0.7) +
@@ -450,7 +451,7 @@ t5 <- ggplot(b_clean, aes(age, swe_grade, color = grade)) +
 
 ```
 
-```{r towre pde histograms,  echo = FALSE, message = FALSE}
+```{r towre pde histograms,  echo = FALSE, message = FALSE, warning = FALSE}
 t2 <- ggplot(b_clean, aes(age, pde_raw, color = grade)) +
   geom_point(alpha = 0.5) +
   labs(title = "TOWRE PDE Raw Scores",
@@ -473,7 +474,7 @@ t6 <-  ggplot(b_clean, aes(age, pde_grade, color = grade)) +
   theme_classic()
 ```
 
-```{r towre scatterplot figure, echo = FALSE, fig.height = 6}
+```{r towre scatterplot figure, echo = FALSE, fig.height = 6, warning = FALSE}
 # format plots
 scatter_towre <- ggarrange(t1, t2, t3, t4,t5, t6,
                   ncol = 2,
@@ -486,7 +487,7 @@ scatter_towre
 
 ### WJ Histograms
 
-```{r wj histogram, echo = FALSE}
+```{r wj histogram, echo = FALSE, warning = FALSE}
 # WJ_NUM
 h_wj1 <- ggplot(b_clean, aes(wj_raw)) +
   geom_histogram(aes( y = ..density..),
@@ -502,7 +503,7 @@ h_wj1 <- ggplot(b_clean, aes(wj_raw)) +
 
 ### WJ Boxplot
 
-```{r wj boxplot, echo = FALSE}
+```{r wj boxplot, echo = FALSE, warning = FALSE}
 b_wj1 <- ggplot(b_clean, aes(grade, wj_raw), fill = grade) +
   geom_boxplot(aes(fill = grade),
                alpha = 0.5) +
@@ -516,7 +517,7 @@ b_wj1 <- ggplot(b_clean, aes(grade, wj_raw), fill = grade) +
 ```
 
 ### WJ Scatterplot
-```{r wj scatterplot, echo = FALSE}
+```{r wj scatterplot, echo = FALSE, warning = FALSE}
 # Still need: WJ age equivalent and WJ grade equivalent
 s_wj1 <- ggplot(b_clean, aes(age, wj_raw, color = grade)) +
   geom_point(alpha = 0.7) +
@@ -526,7 +527,7 @@ s_wj1 <- ggplot(b_clean, aes(age, wj_raw, color = grade)) +
 
 ```
 
-```{r wj plots, fig.width = 10, echo = FALSE}
+```{r wj plots, fig.width = 10, echo = FALSE, warning = FALSE}
 plots_wj <- ggarrange(h_wj1, b_wj1, s_wj1,
                       nrow = 1,
                       ncol = 3,
@@ -534,9 +535,9 @@ plots_wj <- ggarrange(h_wj1, b_wj1, s_wj1,
 plots_wj
 ```
 
-# Correlation Matrix
+## Full Correlation Matrix
 
-```{r}
+```{r create data for corr matrix, echo = FALSE, warning = FALSE}
 # select only numeric columns to use for correlation matrix (add WJ scaled scores later)
 b_corr <- b_clean %>% 
   select(ctopp_c_raw,
@@ -552,14 +553,18 @@ b_corr <- b_clean %>%
          wj_raw,
          age) %>% 
   na.omit()
+```
 
-# with corrplot
+```{r correlation matrix, echo = FALSE, warning = FALSE}
 
-# create correlation matrix
+# create correlation matrix (cor from package corrplot)
 b_matrix <- cor(b_corr)
 
+# something I found online to be able to see values in correlation matrix 
 library(Hmisc)
 res <- rcorr(as.matrix(b_corr))
+
+# custom function I copied and pasted - need to find link
 flattenCorrMatrix <- function(cormat, pmat) {
   ut <- upper.tri(cormat)
   data.frame(
@@ -570,13 +575,40 @@ flattenCorrMatrix <- function(cormat, pmat) {
     )
 }
 flattenCorrMatrix(res$r, res$P)
+```
 
-# plot correlogram 
-corrplot(b_matrix)
+```{r correlogram, echo = FALSE, warning = FALSE}
 
 # combine correlogram with significance test
 b_test <- cor.mtest(b_corr, conf.level = .95)
-corrplot(b_matrix, p.mat = b_test$p, sig.level = 0.05, insig = "label_sig", pch.col = "white")
+corrplot(b_matrix, 
+         p.mat = b_test$p, 
+         insig = "label_sig",
+         sig.level = c(.001, .01, .05),
+         pch.cex = .7, 
+         pch.col = "white",
+         tl.col = "black")
+```
+ 
+## Raw Correlation Matrix
+
+The histograms of the variables are shown on the diagonal. The asterisks indicate the significance levels of the correlations. Each significance level is associated to a symbol (from http://www.sthda.com/english/wiki/correlation-matrix-formatting-and-visualization/) :
+
+p-values(0, 0.001, 0.01, 0.05, 0.1, 1) <=> symbols(“***”, “**”, “*”, “.”, " “)
+ 
+```{r matrix hist, echo = FALSE, message = FALSE, warning = FALSE}
+# something else I found online to plot correlations, histograms, and 
+library("PerformanceAnalytics")
+raw_perform <- b_corr %>% 
+  select(ctopp_c_raw,
+         ctopp_l_raw,
+         swe_raw,
+         pde_raw,
+         wj_raw,
+         age)
+
+raw_matrix <- cor(raw_perform)
+chart.Correlation(raw_matrix, histogram=TRUE, pch=19)
 ```
  
 
