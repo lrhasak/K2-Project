@@ -9,41 +9,49 @@ output: pdf_document
 ```{r setup, include=FALSE}
 # load libraries
 knitr::opts_chunk$set(echo = TRUE)
-library(psych)
-library(lubridate)
-library(knitr)
-library(kableExtra)
-library(ggpubr)
-library(tidyverse)
+library(Hmisc)      # for correlation matrix
+library(psych)      # for descriptive statistics
+library(knitr)      # for knitting to pdf
+library(kableExtra) # for making pretty tables
+library(ggpubr)     # for arrangling plots
+library(corrplot)   # for making correlogram
+library(forcats)    # for reordering factor levels
+library(tidyverse)  # for data wrangling
 ```
 
 ## Load and recode; summary statistics
 ```{r data cleaning, echo = FALSE, message = FALSE}
 # load the data and indicate how NAs are entered
 b_data <- read_csv("K2Behavioral_T1.csv", col_names = TRUE, na = c("N/A"))
-
+colnames(b_data)
 
 b_clean <- b_data %>% 
-  # rename columns to be consistent and r friendly
-  rename(part_id = `Participant ID`,
-         examiner = `Examiner Name(s)`,
-         grade = `Grade`,
-         handedness = `Handedness`,
-         ctopp_c = `CTOPP Color - Raw Score`,
-         ctopp_l = `CTOPP Letter - Raw Score`,
-         towre_swe = `TOWRE - SWE Raw Score (Final)`,
-         towre_pde = `TOWRE - PDE Raw (Final)`,
-         wj_num = `W-J - Number Correct (Final)`) %>% 
+  # rename columns for consistency 
+  rename(part_id = participant_id,
+         ctopp_c_raw = ctopp_color_raw,
+         ctopp_c_scale = ctopp_color_scaled,
+         ctopp_l_raw = ctopp_lttr_raw,
+         ctopp_l_scale = ctopp_lttr_scaled,
+         swe_raw = swe_raw2,
+         pde_raw = pde_raw_final,
+         swe_age = twre_scaled_age,
+         pde_age = pde_scaled_age,
+         swe_grade = swe_scaled_grade,
+         pde_grade = pde_scaled_grade,
+         wj_raw = wj_corr_final,
+         wj_age_b = wj_ageeq_basal,
+         wj_grade_b = wj_gradeeq_basal) %>% 
   # separate age column into year, month, and day columns
-  separate(col = Age,
+  separate(col = k2_age,
            into = c("year", "month", "day"),
            sep = "-") %>% # indicate separating character
   # separate grade column into grade and months in grade
-  separate(col = grade,
+  separate(col = k2_grade,
            into = c("grade", "g_month"),
            sep = "_") %>% 
-  # get rid of the notes column for now
-  select(- Notes) %>% 
+  # reorders grade variable to show in this order for plotting
+  mutate(grade = fct_relevel(grade,
+                             "K", "1", "2")) %>% 
   # convert most columns to doubles (numeric values)
   type_convert()
   
@@ -52,6 +60,8 @@ b_clean$age <- b_clean$year + (b_clean$month/12) + (b_clean$day/365)
 
 # and finally look at data structure
 head(b_clean)
+
+# still need to edit this to make sense of WJ age and grade equivalents
 ```
 
 
@@ -59,11 +69,20 @@ head(b_clean)
 # deselect unecessary columns and get summary statistics
 b_clean_descr <- b_clean %>% 
   select(- part_id,
-         - examiner,
-         - handedness,
+         - k2behav_examiner,
+         - k2_hand,
+         - k2behav_notes,
          - year,
          - month,
-         - day) 
+         - day,
+         - grade,
+         - g_month,
+         # leave out these two columns for now
+         - twre_scaledsc_age,
+         - twre_scaledsc_grade) %>% 
+  # puts age first
+  select(age, everything())
+
 # put output in a nice table
 b_clean_descr <- data.frame(describe(b_clean_descr))
 
@@ -78,85 +97,487 @@ kable(b_clean_descr,
 
 # Visualization
 
+## CTOPP 
 
-## Histograms
-```{r, echo = FALSE, message = FALSE, warning = FALSE}
-# CTOPP C
-p1 <- ggplot(b_clean, aes(ctopp_c)) +
-  geom_histogram(bins = 20) +
-  theme_classic() 
+### CTOPP Histograms
+```{r ctopp c histograms, echo = FALSE, message = FALSE, warning = FALSE}
+#Naming convention: hp_cc = histogram plot ctopp color, etc. 
+h_cc1 <- ggplot(b_clean, aes(ctopp_c_raw)) +
+  geom_histogram(aes( y = ..density..),
+                 binwidth = 2,
+                 color = "black",
+                 fill = "white") +
+  geom_density(aes(fill = grade), alpha = 0.3) +
+  labs(x = "CTOPP Color Raw Score (s)",
+       y = "Density") +
+  theme_classic()
 
-# CTOPP L
-p2 <- ggplot(b_clean, aes(ctopp_l)) +
-  geom_histogram(bins = 20) +
-  theme_classic() 
+h_cc2 <- ggplot(b_clean, aes(ctopp_c_scale)) +
+  geom_histogram(aes( y = ..density..),
+                 binwidth = 1, 
+                 color = "black",
+                 fill = "white") +
+  geom_density(aes(fill = grade), alpha = 0.3) +
+  labs(x = "CTOPP Color Raw Score (s)",
+       y = "Density") +
+  theme_classic()
+
+hp_cc <- ggarrange(h_cc1, h_cc2, 
+                  ncol = 2,
+                  nrow = 1, 
+                  common.legend = TRUE)
+hp_cc
+
+```
+
+```{r ctopp l hist, echo = FALSE, message = FALSE, warning = FALSE}
+# CTOPP L RAW
+h_cl1 <- ggplot(b_clean, aes(ctopp_l_raw)) +
+  geom_histogram(aes( y = ..density..),
+                 binwidth = 2, 
+                 color = "black",
+                 fill = "white") +
+  geom_density(aes(fill = grade), alpha = 0.3) +
+  labs(x = "CTOPP Letter Raw Score (s)",
+       y = "Density") +
+  xlim(0, 85) +
+  theme_classic()
 
 
-# TOWRE_SWE
-p3 <- ggplot(b_clean, aes(towre_swe)) +
-  geom_histogram(bins = 20)  +
-  theme_classic() 
+# CTOPP L SCALE
+h_cl2 <- ggplot(b_clean, aes(ctopp_l_scale)) +
+  geom_histogram(aes( y = ..density..),
+                 binwidth = 1, 
+                 color = "black",
+                 fill = "white") +
+  geom_density(aes(fill = grade), alpha = 0.3) +
+  labs(x = "CTOPP Letter Raw Score (s)",
+       y = "Density") +
+  theme_classic()
 
+hp_cl <- ggarrange(h_cl1, h_cl2, 
+                   ncol = 2,
+                   nrow = 1, 
+                   common.legend = TRUE)
+hp_cl
+```
+
+### CTOPP Boxplots
+
+```{r ctopp boxplots, echo = FALSE, message = FALSE}
+b_cc1 <- ggplot(b_clean, aes(grade, ctopp_c_raw), fill = grade) +
+  geom_boxplot(aes(fill = grade),
+               alpha = 0.5) +
+  geom_dotplot(binaxis = 'y',
+               stackdir = 'center',
+               dotsize = .5,
+               fill = "white") +
+  labs(title = "CTOPP Color",
+       x = "Grade",
+       y = "Raw Score (s)") +
+  theme_classic()
+
+b_cl1 <- ggplot(b_clean, aes(grade, ctopp_l_raw), fill = grade) +
+  geom_boxplot(aes(fill = grade),
+               alpha = 0.5) +
+  geom_dotplot(binaxis = 'y',
+               stackdir = 'center',
+               dotsize = .5,
+               fill = "white") +
+  labs(title = "CTOPP Letter",
+       x = "Grade",
+       y = "Raw Score (s)") +
+  theme_classic()
+
+b_cc2 <- ggplot(b_clean, aes(grade, ctopp_c_scale), fill = grade) +
+  geom_boxplot(aes(fill = grade),
+               alpha = 0.5) +
+  geom_dotplot(binaxis = 'y',
+               stackdir = 'center',
+               dotsize = .5,
+               fill = "white") +
+  labs(title = "CTOPP Color Scaled",
+       x = "Grade",
+       y = "Scaled Score (s)") +
+  theme_classic()
+
+b_cl2 <- ggplot(b_clean, aes(grade, ctopp_l_scale), fill = grade) +
+  geom_boxplot(aes(fill = grade),
+               alpha = 0.5) +
+  geom_dotplot(binaxis = 'y',
+               stackdir = 'center',
+               dotsize = .5,
+               fill = "white") +
+  labs(title = "CTOPP Letter Scaled",
+       x = "Grade",
+       y = "Scaled Score (s)") +
+  theme_classic()
+
+box_c <- ggarrange(b_cc1, b_cl1, b_cc2, b_cl2,
+                  ncol = 2,
+                  nrow = 2,
+                  legend = "none")
+box_c
+```
+### CTOPP Scatterplots 
+
+```{r ctopp scatterplots, echo = FALSE, message = FALSE}
+
+# ctopp color plots
+s_cc1 <- ggplot(b_clean, aes(age, ctopp_c_raw, color = grade)) +
+  geom_point(alpha = 0.6) +
+  labs(title = "CTOPP Color Raw Scores",
+       x = "Age",
+       y = "Seconds") +
+  theme_classic()
+ 
+s_cc2 <- ggplot(b_clean, aes(age, ctopp_c_scale, color = grade)) +
+  geom_point(alpha = 0.6) +
+  labs(title = "CTOPP Color Scaled Scores",
+       x = "Age",
+       y = "Scaled Score") +
+  theme_classic()
+
+# ctopp letter plots 
+s_cl1 <- ggplot(b_clean, aes(age, ctopp_l_raw, color = grade)) +
+  geom_point(alpha = 0.6) +
+  labs(title = "CTOPP Letter Raw Scores",
+       x = "Age",
+       y = "Seconds") +
+  theme_classic()
+
+s_cl2 <- ggplot(b_clean, aes(age, ctopp_l_scale, color = grade)) +
+  geom_point(alpha = 0.6) +
+  labs(title = "CTOPP Letter Scaled Scores",
+       x = "Age",
+       y = "Scaled Score") +
+  theme_classic()
+
+# format figure
+scatter_c <- ggarrange(s_cc1, s_cl1, s_cc2, s_cl2,
+                  ncol = 2,
+                  nrow = 2,
+                  common.legend = TRUE)
+scatter_c
+```
+## TOWRE
+
+### TOWRE Histograms
+
+```{r towre swe hist, echo = FALSE, message = FALSE}
+# TOWRE_SWE 
+h_ts1 <- ggplot(b_clean, aes(swe_raw)) +
+  geom_histogram(aes( y = ..density..),
+                 binwidth = 5, 
+                 color = "black",
+                 fill = "white") +
+  geom_density(aes(fill = grade), alpha = 0.3) +
+  labs(title = "TOWRE SWE",
+       x = "# Correct",
+       y = "Density") +
+  theme_classic()
+
+
+h_ts2 <- ggplot(b_clean, aes(swe_age)) +
+  geom_histogram(aes( y = ..density..),
+                 binwidth = 5, 
+                 color = "black",
+                 fill = "white") +
+  geom_density(aes(fill = grade), alpha = 0.3) + 
+  labs(x = "# Correct (Age Scaled)",
+       y = "Density") +
+  theme_classic()
+
+h_ts3 <- ggplot(b_clean, aes(swe_grade)) +
+  geom_histogram(aes( y = ..density..),
+                 binwidth = 5, 
+                 color = "black",
+                 fill = "white") +
+  geom_density(aes(fill = grade), alpha = 0.3) +
+  labs(x = "# Correct (Grade Scaled)",
+       y = "Density") +
+  theme_classic()
+
+```
+
+
+```{r towre pde hist,  echo = FALSE, message = FALSE}
 
 # TOWRE_PDE
-p4 <- ggplot(b_clean, aes(towre_pde)) +
-  geom_histogram(bins = 20) +
-  theme_classic() 
+h_tp1 <- ggplot(b_clean, aes(pde_raw)) +
+  geom_histogram(aes( y = ..density..),
+                 binwidth = 2, 
+                 color = "black",
+                 fill = "white") +
+  geom_density(aes(fill = grade), alpha = 0.3) +
+  labs(title = "TOWRE PDE",
+       x = "# Correct",
+       y = "Density") +
+  theme_classic()
+
+h_tp2 <- ggplot(b_clean, aes(pde_age)) +
+  geom_histogram(aes( y = ..density..),
+                 binwidth = 2, 
+                 color = "black",
+                 fill = "white") +
+  geom_density(aes(fill = grade), alpha = 0.3) +
+  labs(x = "# Correct (Age Scaled)",
+       y = "Density") +
+  theme_classic()
+
+h_tp3 <- ggplot(b_clean, aes(pde_grade)) +
+  geom_histogram(aes( y = ..density..),
+                 binwidth = 2 , 
+                 color = "black",
+                 fill = "white") +
+  geom_density(aes(fill = grade), alpha = 0.3) +
+  labs(x = "# Correct (Grade Scaled)",
+       y = "Density") +
+  theme_classic()
+
+hist_t <- ggarrange(h_ts1, h_tp1, h_ts2, h_tp2, h_ts3, h_tp3,
+                    ncol = 2,
+                    nrow = 3,
+                    common.legend = TRUE)
+hist_t
+```
+### TOWRE Boxplots 
+
+```{r towre swe boxplots, echo = FALSE}
+b_ts1 <- ggplot(b_clean, aes(grade, swe_raw), fill = grade) +
+  geom_boxplot(aes(fill = grade),
+               alpha = 0.5) +
+  geom_dotplot(binaxis = 'y',
+               stackdir = 'center',
+               dotsize = .5,
+               fill = "white") +
+  labs(title = "TOWRE SWE",
+       x = "Grade",
+       y = "# Correct") +
+  theme_classic()
+
+b_ts2 <- ggplot(b_clean, aes(grade, swe_age), fill = grade) +
+  geom_boxplot(aes(fill = grade),
+               alpha = 0.5) +
+  geom_dotplot(binaxis = 'y',
+               stackdir = 'center',
+               dotsize = .5,
+               fill = "white") +
+  labs(x = "Grade",
+       y = "# Correct (Age Scaled)") +
+  theme_classic()
+
+b_ts3 <- ggplot(b_clean, aes(grade, swe_grade), fill = grade) +
+  geom_boxplot(aes(fill = grade),
+               alpha = 0.5) +
+  geom_dotplot(binaxis = 'y',
+               stackdir = 'center',
+               dotsize = .5,
+               fill = "white") +
+  labs(x = "Grade",
+       y = "# Correct (Grade Scaled)") +
+  theme_classic()
+```
+
+```{r towre pde boxplots, echo = FALSE}
+b_tp1 <- ggplot(b_clean, aes(grade, pde_raw), fill = grade) +
+  geom_boxplot(aes(fill = grade),
+               alpha = 0.5) +
+  geom_dotplot(binaxis = 'y',
+               stackdir = 'center',
+               dotsize = .5,
+               fill = "white") +
+  labs(title = "TOWRE PDE",
+       x = "Grade",
+       y = "# Correct") +
+  theme_classic()
+
+b_tp2 <- ggplot(b_clean, aes(grade, pde_age), fill = grade) +
+  geom_boxplot(aes(fill = grade),
+               alpha = 0.5) +
+  geom_dotplot(binaxis = 'y',
+               stackdir = 'center',
+               dotsize = .5,
+               fill = "white") +
+  labs(x = "Grade",
+       y = "# Correct (Age Scaled") +
+  theme_classic()
+
+b_tp3 <- ggplot(b_clean, aes(grade, pde_grade), fill = grade) +
+  geom_boxplot(aes(fill = grade),
+               alpha = 0.5) +
+  geom_dotplot(binaxis = 'y',
+               stackdir = 'center',
+               dotsize = .5,
+               fill = "white") +
+  labs(x = "Grade",
+       y = "# Correct (Grade Scaled)") +
+  theme_classic()
+```
+
+```{r towre boxplot figure, echo = FALSE, fig.height = 6}
+box_t <- ggarrange(b_ts1, b_tp1, b_ts2, b_tp2, b_ts3, b_tp3,
+                  ncol = 2,
+                  nrow = 3,
+                  legend = "none")
+box_t
+```
 
 
+### TOWRE Scatterplots
+```{r towre swe scatterplots,  echo = FALSE, message = FALSE}
+# SWE plots
+t1 <- ggplot(b_clean, aes(age, swe_raw, color = grade)) +
+  geom_point(alpha = 0.7) +
+  labs(title = "TOWRE SWE Raw Scores",
+       x = "Age",
+       y = "# Correct") +
+  theme_classic()
+
+t3 <- ggplot(b_clean, aes(age, swe_age, color = grade)) +
+  geom_point(alpha = 0.7) +
+  labs(title = "TOWRE SWE Age-Scaled Scores",
+       x = "Age",
+       y = "# Correct (Age-Scaled)") +
+  theme_classic()
+
+t5 <- ggplot(b_clean, aes(age, swe_grade, color = grade)) +
+  geom_point(alpha = 0.7) +
+  labs(title = "TOWRE SWE Grade-Scaled Scores",
+       x = "Age",
+       y = "# Correct (Grade-Scaled)") +
+  theme_classic()
+
+```
+
+```{r towre pde histograms,  echo = FALSE, message = FALSE}
+t2 <- ggplot(b_clean, aes(age, pde_raw, color = grade)) +
+  geom_point(alpha = 0.5) +
+  labs(title = "TOWRE PDE Raw Scores",
+       x = "Age",
+       y = "# Correct") +
+  theme_classic()
+
+t4 <- ggplot(b_clean, aes(age, pde_age, color = grade)) +
+  geom_point(alpha = 0.5) +
+  labs(title = "TOWRE PDE Age-Scaled Scores",
+       x = "Age",
+       y = "# Correct (Age-Scaled)") +
+  theme_classic()
+
+t6 <-  ggplot(b_clean, aes(age, pde_grade, color = grade)) +
+  geom_point(alpha = 0.5) +
+  labs(title = "TOWRE PDE Grade-Scaled Scores",
+       x = "Age",
+       y = "# Correct (Grade-Scaled)") +
+  theme_classic()
+```
+
+```{r towre scatterplot figure, echo = FALSE, fig.height = 6}
+# format plots
+scatter_towre <- ggarrange(t1, t2, t3, t4,t5, t6,
+                  ncol = 2,
+                  nrow = 3,
+                  common.legend = TRUE)
+scatter_towre
+```
+
+## Woodcock Johnson
+
+### WJ Histograms
+
+```{r wj histogram, echo = FALSE}
 # WJ_NUM
-p5 <- ggplot(b_clean, aes(wj_num)) +
-  geom_histogram(bins = 20) +
-  theme_classic() 
-
-# combine all into one plot for easy viewing
-hist <- ggarrange(p1, p2, p3, p4, p5,
-                  ncol = 2,
-                  nrow = 3)
-hist
+h_wj1 <- ggplot(b_clean, aes(wj_raw)) +
+  geom_histogram(aes( y = ..density..),
+                 binwidth = 2, 
+                 color = "black",
+                 fill = "white") +
+  geom_density(aes(fill = grade), alpha = 0.3) +
+  labs(title = "Woodjcock Johnson Raw (basal rule)",
+       x = "# Correct",
+       y = "Density") +
+  theme_classic()
 ```
 
+### WJ Boxplot
 
-## Scatterplots 
-```{r, echo = FALSE, message = FALSE, warning = FALSE}
-# ctopp_c
-s1 <- ggplot(b_clean, aes(age, ctopp_c)) +
-  geom_point(alpha = 0.5) +
-  geom_smooth(method = "lm", se = FALSE) +
+```{r wj boxplot, echo = FALSE}
+b_wj1 <- ggplot(b_clean, aes(grade, wj_raw), fill = grade) +
+  geom_boxplot(aes(fill = grade),
+               alpha = 0.5) +
+  geom_dotplot(binaxis = 'y',
+               stackdir = 'center',
+               dotsize = .5,
+               fill = "white") +
+  labs(x = "Grade",
+       y = "# Correct") +
   theme_classic()
+```
 
-# ctopp_l
-s2 <- ggplot(b_clean, aes(age, ctopp_l)) +
-  geom_point(alpha = 0.5) +
-  geom_smooth(method = "lm", se = FALSE) +
+### WJ Scatterplot
+```{r wj scatterplot, echo = FALSE}
+# Still need: WJ age equivalent and WJ grade equivalent
+s_wj1 <- ggplot(b_clean, aes(age, wj_raw, color = grade)) +
+  geom_point(alpha = 0.7) +
+  labs(x = "Age",
+       y = "# Correct") +
   theme_classic()
-
-
-# towre_swe
-s3 <- ggplot(b_clean, aes(age, towre_swe)) +
-  geom_point(alpha = 0.5) +
-  geom_smooth(method = "lm", se = FALSE) +
-  theme_classic()
-
-
-# towre_pde
-s4 <- ggplot(b_clean, aes(age, towre_pde)) +
-  geom_point(alpha = 0.5) +
-  geom_smooth(method = "lm", se = FALSE) +
-  theme_classic()
-
-
-# wj_num
-s5 <- ggplot(b_clean, aes(age, wj_num)) +
-  geom_point(alpha = 0.5) +
-  geom_smooth(method = "lm", se = FALSE) +
-  theme_classic()
-
-scatter <- ggarrange(s1, s2, s3, s4, s5,
-                  ncol = 2,
-                  nrow = 3)
-scatter
 
 ```
+
+```{r wj plots, fig.width = 10, echo = FALSE}
+plots_wj <- ggarrange(h_wj1, b_wj1, s_wj1,
+                      nrow = 1,
+                      ncol = 3,
+                      common.legend = TRUE)
+plots_wj
+```
+
+# Correlation Matrix
+
+```{r}
+# select only numeric columns to use for correlation matrix (add WJ scaled scores later)
+b_corr <- b_clean %>% 
+  select(ctopp_c_raw,
+         ctopp_c_scale,
+         ctopp_l_raw,
+         ctopp_l_scale,
+         swe_raw,
+         swe_age,
+         swe_grade,
+         pde_raw,
+         pde_age,
+         pde_grade,
+         wj_raw,
+         age) %>% 
+  na.omit()
+
+# with corrplot
+
+# create correlation matrix
+b_matrix <- cor(b_corr)
+
+library(Hmisc)
+res <- rcorr(as.matrix(b_corr))
+flattenCorrMatrix <- function(cormat, pmat) {
+  ut <- upper.tri(cormat)
+  data.frame(
+    row = rownames(cormat)[row(cormat)[ut]],
+    column = rownames(cormat)[col(cormat)[ut]],
+    cor  =(cormat)[ut],
+    p = pmat[ut]
+    )
+}
+flattenCorrMatrix(res$r, res$P)
+
+# plot correlogram 
+corrplot(b_matrix)
+
+# combine correlogram with significance test
+b_test <- cor.mtest(b_corr, conf.level = .95)
+corrplot(b_matrix, p.mat = b_test$p, sig.level = 0.05, insig = "label_sig", pch.col = "white")
+```
+ 
 
  
