@@ -219,6 +219,7 @@ box_c <- ggarrange(b_cc1, b_cl1, b_cc2, b_cl2,
                   legend = "none")
 box_c
 ```
+
 ### CTOPP Scatterplots 
 
 ```{r ctopp scatterplots, echo = FALSE, message = FALSE, warning = FALSE}
@@ -344,7 +345,7 @@ hist_t
 
 ### TOWRE Boxplots 
 
-```{r towre swe boxplots, echo = FALSE, warning = FALSE}
+```{r towre swe boxplots, echo = FALSE, message = FALSE, warning = FALSE}
 b_ts1 <- ggplot(b_clean, aes(grade, swe_raw), fill = grade) +
   geom_boxplot(aes(fill = grade),
                alpha = 0.5) +
@@ -380,7 +381,7 @@ b_ts3 <- ggplot(b_clean, aes(grade, swe_grade), fill = grade) +
   theme_classic()
 ```
 
-```{r towre pde boxplots, echo = FALSE, warning = FALSE}
+```{r towre pde boxplots, echo = FALSE, message = FALSE, warning = FALSE}
 b_tp1 <- ggplot(b_clean, aes(grade, pde_raw), fill = grade) +
   geom_boxplot(aes(fill = grade),
                alpha = 0.5) +
@@ -474,7 +475,7 @@ t6 <-  ggplot(b_clean, aes(age, pde_grade, color = grade)) +
   theme_classic()
 ```
 
-```{r towre scatterplot figure, echo = FALSE, fig.height = 6, warning = FALSE}
+```{r towre scatterplot figure, echo = FALSE, fig.height = 8, warning = FALSE}
 # format plots
 scatter_towre <- ggarrange(t1, t2, t3, t4,t5, t6,
                   ncol = 2,
@@ -574,7 +575,7 @@ flattenCorrMatrix <- function(cormat, pmat) {
     p = pmat[ut]
     )
 }
-flattenCorrMatrix(res$r, res$P)
+
 ```
 
 ```{r correlogram, echo = FALSE, warning = FALSE}
@@ -588,9 +589,17 @@ corrplot(b_matrix,
          pch.cex = .7, 
          pch.col = "white",
          tl.col = "black")
+
+# calling function from above to show correlation matrix values
+corr_mat <- flattenCorrMatrix(res$r, res$P)
+kable(corr_mat, 
+      digits = 3, # 3 digits (or however many you want)
+      format = "latex", 
+      caption = "K2 Behavioral Descriptive Statistics") %>% 
+  kable_styling(latex_options = c("striped", "scale_down"))
 ```
  
-## Raw Correlation Matrix
+##Correlation Matrix (Raw Scores Only)
 
 The histograms of the variables are shown on the diagonal. The asterisks indicate the significance levels of the correlations. Each significance level is associated to a symbol (from http://www.sthda.com/english/wiki/correlation-matrix-formatting-and-visualization/) :
 
@@ -611,5 +620,46 @@ raw_matrix <- cor(raw_perform)
 chart.Correlation(raw_matrix, histogram=TRUE, pch=19)
 ```
  
+# Basic Significance Tests - Raw Scores Only
 
+*Tukey:* 
+diff = difference between means of the two groups
+lwr, upr = the lower and upper end point of the confidence interval
+p adj = p-value after adjustment for multiple comparisons
  
+```{r ctopp c aov}
+ctopp_c_aov <- aov(ctopp_c_raw ~ grade, data = b_clean)
+summary(ctopp_c_aov)
+TukeyHSD(ctopp_c_aov)
+```
+
+K and 2 are signficantly different from each other, but K is not significantly different from 1 and 1 is not significantly different from 2 at $\alpha$ = .05. 
+
+```{r ctopp l aov}
+ctopp_l_aov <- aov(ctopp_l_raw ~ grade, data = b_clean)
+summary(ctopp_l_aov)
+TukeyHSD(ctopp_l_aov)
+```
+K is sig. diff. from 1 and 2 but 1 and 2 are not sig diff from each other at $\alpha$ = .05.
+
+```{r swe raw}
+swe_aov <- aov(swe_raw ~ grade, data = b_clean)
+summary(swe_aov)
+TukeyHSD(swe_aov)
+```
+K is sig. diff. from 1 and 2 but 1 and 2 are not sig diff from each other at $\alpha$ = .05.
+
+```{r pde raw}
+pde_aov <- aov(pde_raw ~ grade, data = b_clean)
+summary(pde_aov)
+TukeyHSD(pde_aov)
+```
+All three grades are significantly different from each other at $\alpha$ = .05.
+
+```{r wj raw}
+wj_aov <- aov(wj_raw ~ grade, data = b_clean)
+summary(wj_aov)
+TukeyHSD(wj_aov)
+```
+All three grades are significantly different from each other at $\alpha$ = .05.
+
