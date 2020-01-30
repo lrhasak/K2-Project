@@ -592,11 +592,12 @@ corrplot(b_matrix,
 
 # calling function from above to show correlation matrix values
 corr_mat <- flattenCorrMatrix(res$r, res$P)
-kable(corr_mat, 
+kable(corr_mat,
       digits = 3, # 3 digits (or however many you want)
-      format = "latex", 
-      caption = "K2 Behavioral Descriptive Statistics") %>% 
-  kable_styling(latex_options = c("striped", "scale_down"))
+      format = "latex",
+      caption = "K2 Behavioral Descriptive Statistics") %>%
+  kable_styling(latex_options = c("striped", "scale_down"),
+                font_size = 4)
 ```
  
 ##Correlation Matrix (Raw Scores Only)
@@ -630,7 +631,7 @@ p adj = p-value after adjustment for multiple comparisons
 ```{r ctopp c aov}
 ctopp_c_aov <- aov(ctopp_c_raw ~ grade, data = b_clean)
 summary(ctopp_c_aov)
-TukeyHSD(ctopp_c_aov)
+TukeyHSD(ctopp_c_aov) 
 ```
 
 K and 2 are signficantly different from each other, but K is not significantly different from 1 and 1 is not significantly different from 2 at $\alpha$ = .05. 
