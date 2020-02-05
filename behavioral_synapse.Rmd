@@ -99,63 +99,72 @@ kable(b_clean_descr,
 
 Current colors for the mean lines are wrong and need to be fixed.
 
-```{r}
+```{r ctopp c density plot}
 
 ggplot(b_clean, aes(ctopp_c_raw)) +
   geom_density(aes(fill = grade), alpha = 0.3) +
   geom_vline(data = b_clean %>% 
-            filter(grade == "K"), 
-             aes(xintercept = mean(na.omit(ctopp_c_raw)),
-                 color = grade), 
+               filter(grade == "K"), 
+             aes(xintercept = mean(na.omit(ctopp_c_raw))),
+             color = "red", 
              linetype="dashed",
              size = 0.5) +
   geom_vline(data = b_clean %>% 
-            filter(grade == "1"), 
-             aes(xintercept = mean(na.omit(ctopp_c_raw)),
-             color = grade),
+               filter(grade == "1"), 
+             aes(xintercept = mean(na.omit(ctopp_c_raw))),
+             color = "darkgreen",
+             alpha = 0.5,
              linetype="dashed",
              size = 0.5) +
-    geom_vline(data = b_clean %>% 
-              filter(grade == "2"), 
-             aes(xintercept = mean(na.omit(ctopp_c_raw)),
-                 color = grade),
+  geom_vline(data = b_clean %>% 
+               filter(grade == "2"), 
+             aes(xintercept = mean(na.omit(ctopp_c_raw))),
+             color = "blue",
              linetype="dashed",
              size = 0.5,
              alpha = 0.6) +
-  scale_color_discrete() +
-labs(x = "color naming (seconds)",
-     y = "probability of a student obtaining this score") +
-  xlim(0, 85) +
+  labs(x = "color naming (seconds)",
+       y = "probability of a student obtaining this score") +
   scale_x_continuous(limits = c(0, 90),
-                     breaks = c(10, 20, 30, 40, 50, 60, 70, 80)) +
-theme_classic()
+                     breaks = c(0, 10, 20, 30, 40, 50, 60, 70, 80)) +
+  scale_y_continuous(expand = expand_scale(mult = c(0, .1))) +
+  theme_classic()
 
+ggsave("ctopp_density_all.pdf")
+```
+
+```{r ctopp l density plot }
 ggplot(b_clean, aes(ctopp_l_raw)) +
   geom_density(aes(fill = grade), alpha = 0.3) +
   geom_vline(data = b_clean %>% 
-            filter(grade == "K"), 
-             aes(xintercept = mean(na.omit(ctopp_l_raw)),
-                 color = grade), 
+               filter(grade == "K"), 
+             aes(xintercept = mean(na.omit(ctopp_l_raw))), 
+             color = "red", 
              linetype="dashed",
              size = 0.5) +
   geom_vline(data = b_clean %>% 
-            filter(grade == "1"), 
-             aes(xintercept = mean(na.omit(ctopp_l_raw)),
-             color = grade),
+               filter(grade == "1"), 
+             aes(xintercept = mean(na.omit(ctopp_l_raw))), 
+                 color = "darkgreen",
+             alpha = 0.5,
              linetype="dashed",
              size = 0.5) +
-    geom_vline(data = b_clean %>% 
-              filter(grade == "2"), 
-             aes(xintercept = mean(na.omit(ctopp_l_raw)),
-                 color = grade),
+  geom_vline(data = b_clean %>% 
+               filter(grade == "2"), 
+             aes(xintercept = mean(na.omit(ctopp_l_raw))), 
+             color = "blue",
              linetype="dashed",
              size = 0.5,
              alpha = 0.6) +
-  scale_color_discrete() +
-labs(x = "letter naming (seconds)",
-     y = "probability of a student obtaining this score") +
+  scale_x_continuous(limits = c(0, 90),
+                     breaks = c(0, 10, 20, 30, 40, 50, 60, 70, 80)) +
+  scale_y_continuous(expand = expand_scale(mult = c(0, .1))) +
+  labs(x = "letter naming (seconds)",
+       y = "probability of a student obtaining this score") +
   xlim(0, 85) +
   theme_classic()
+
+ggsave("ctoppl_density_all.pdf")
 ```
 
 
@@ -178,11 +187,15 @@ b_clean %>%
             color="black", linetype="dashed", size = 0.5) +
   xlim(0, 80) +
   scale_y_continuous(expand = expand_scale(mult = c(0, .1))) +
-  labs(title = "Kindergarten CTOPP Raw Scores",
+  labs(title = "Letter Fluency - Kindergarten",
        x = "Letter Naming (s)",
        y = "# of Students") +
   theme_classic()
 
+ggsave("ctoppl_kindergarten.pdf")
+```
+
+```{r ctopp color k}
 
 b_clean %>% 
   filter(grade == "K") %>%
@@ -191,22 +204,25 @@ b_clean %>%
                  color = "black",
                  fill = "lightblue") +
   geom_vline(aes(xintercept = 41),
-            color="black", linetype="dashed", size = 1) +
+             color="black", linetype="dashed", size = 1) +
   geom_vline(aes(xintercept = 25),
-            color="black", linetype="dashed", size = 0.5) +
-    geom_vline(aes(xintercept = 57),
-            color="black", linetype="dashed", size = 0.5) +
+             color="black", linetype="dashed", size = 0.5) +
+  geom_vline(aes(xintercept = 57),
+             color="black", linetype="dashed", size = 0.5) +
   xlim(0, 80) +
   scale_y_continuous(expand = expand_scale(mult = c(0, .1))) +
-  labs(x = "Color Naming (s)",
+  labs(title = "Color Fluency - Kindergarten", 
+       x = "Color Naming (s)",
        y = "# of Students") +
   theme_classic()
+
+ggsave("ctoppc_kindergarten.pdf")
 ```
 
 ### First grade
 Lines in the first plot denote letter naming norms for 7-year olds, *M* = 23, *SD* = 8. Lines in the second plot denote color naming norms for 6-year olds, *M* = 41, *SD* = 16 (there are no color naming norms past age 6). Mean age of the first grade class at time of testing was 6.78 years. 
 
-```{r}
+```{r ctopp l first grade}
 # used 7 year old norms - could also use 6 for consistency
 b_clean %>% 
   filter(grade == "1") %>%
@@ -215,18 +231,22 @@ b_clean %>%
                  color = "black",
                  fill = "lightblue") +
   geom_vline(aes(xintercept = 23),
-            color="black", linetype="dashed", size = 1) +
+             color="black", linetype="dashed", size = 1) +
   geom_vline(aes(xintercept = 15),
-            color="black", linetype="dashed", size = 0.5) +
-    geom_vline(aes(xintercept = 31),
-            color="black", linetype="dashed", size = 0.5) +
+             color="black", linetype="dashed", size = 0.5) +
+  geom_vline(aes(xintercept = 31),
+             color="black", linetype="dashed", size = 0.5) +
   xlim(0, 80) +
   scale_y_continuous(expand = expand_scale(mult = c(0, .1))) +
-  labs(title = "First Grade CTOPP Raw Scores",
+  labs(title = "Letter Fluency - First Grade",
        x = "Letter Naming (s)",
        y = "# of Students") +
   theme_classic()
 
+ggsave("ctoppl_first.pdf")
+```
+
+```{r ctopp c first grade}
 # no norms for color naming past 6 yrs old so used 6 yr old norms bc many students are still 6
 b_clean %>% 
   filter(grade == "1") %>%
@@ -235,17 +255,19 @@ b_clean %>%
                  color = "black",
                  fill = "lightblue") +
   geom_vline(aes(xintercept = 41),
-            color="black", linetype="dashed", size = 1) +
+             color="black", linetype="dashed", size = 1) +
   geom_vline(aes(xintercept = 25),
-            color="black", linetype="dashed", size = 0.5) +
-    geom_vline(aes(xintercept = 57),
-            color="black", linetype="dashed", size = 0.5) +
+             color="black", linetype="dashed", size = 0.5) +
+  geom_vline(aes(xintercept = 57),
+             color="black", linetype="dashed", size = 0.5) +
   xlim(0, 80) +
   scale_y_continuous(expand = expand_scale(mult = c(0, .1))) +
-  labs(x = "Color Naming (s)",
+  labs(title = "Color Fluency - First Grade",
+       x = "Color Naming (s)",
        y = "# of Students") +
   theme_classic()
 
+ggsave("ctoppc_first.pdf")
 # mean age = 6.78
   # 2nd - mean age = 7.52
 ```
@@ -269,11 +291,15 @@ b_clean %>%
             color="black", linetype="dashed", size = 0.5) +
   xlim(0, 80) +
   scale_y_continuous(expand = expand_scale(mult = c(0, .1))) +
-  labs(title = "Second Grade CTOPP Raw Scores",
+  labs(title = "Letter Fluency - Second Grade",
        x = "Letter Naming (s)",
        y = "# of Students") +
   theme_classic()
 
+ggsave("ctoppl_second.pdf")
+```
+
+```{r}
 # no norms for color naming past 6 yrs old 
 b_clean %>% 
   filter(grade == "2") %>%
@@ -283,16 +309,20 @@ b_clean %>%
                  fill = "lightblue") +
   xlim(0, 80) +
   scale_y_continuous(expand = expand_scale(mult = c(0, .1))) +
-  labs(x = "Color Naming (s)",
+  labs(title = "Color Fluency - Second",
+       x = "Color Naming (s)",
        y = "# of Students") +
   theme_classic()
+
+ggsave("ctoppc_second.pdf")
+
 ```
 
 
 # TOWRE Histograms
 Norms from chart on page 85
 
-```{r}
+```{r swe kindergarten}
 b_clean %>% 
   filter(grade == "K") %>%
   ggplot(aes(swe_raw)) +
@@ -307,12 +337,15 @@ b_clean %>%
             color="black", linetype="dashed", size = 0.5) +
   xlim(0, 80) +
   scale_y_continuous(expand = expand_scale(mult = c(0, .1))) +
-  labs(title = "Kindergarten SWE Raw Scores",
+  labs(title = "Sight Word Fluency - Kindergarten",
        x = "# of Sight Words Read in 45 seconds)",
        y = "# of Students") +
   theme_classic()
 
+ggsave("swe_k.pdf")
+```
 
+```{r pde kindergarten}
 b_clean %>% 
   filter(grade == "K") %>%
   ggplot(aes(pde_raw)) +
@@ -320,20 +353,23 @@ b_clean %>%
                  color = "black",
                  fill = "lightblue") +
   geom_vline(aes(xintercept = 13),
-            color="black", linetype="dashed", size = 1) +
+             color="black", linetype="dashed", size = 1) +
   geom_vline(aes(xintercept = 4),
-            color="black", linetype="dashed", size = 0.5) +
-    geom_vline(aes(xintercept = 22),
-            color="black", linetype="dashed", size = 0.5) +
+             color="black", linetype="dashed", size = 0.5) +
+  geom_vline(aes(xintercept = 22),
+             color="black", linetype="dashed", size = 0.5) +
   xlim(0, 80) +
   scale_y_continuous(expand = expand_scale(mult = c(0, .1))) +
-  labs(x = "# of Pseudowords read in 45 seconds",
+  labs(title = "Pseudoword Fluency - Kindergarten",
+       x = "# of Pseudowords read in 45 seconds",
        y = "# of Students") +
   theme_classic()
+
+ggsave("pde_k.pdf")
 ```
 ### First grade TOWRE histograms
 
-```{r}
+```{r swe first}
 b_clean %>% 
   filter(grade == "1") %>%
   ggplot(aes(swe_raw)) +
@@ -348,12 +384,15 @@ b_clean %>%
             color="black", linetype="dashed", size = 0.5) +
   xlim(0, 80) +
   scale_y_continuous(expand = expand_scale(mult = c(0, .1))) +
-  labs(title = "1st Grade SWE Raw Scores",
+  labs(title = "Sightword Fluency - First Grade",
        x = "# of Sight Words Read in 45 seconds)",
        y = "# of Students") +
   theme_classic()
 
+ggsave("swe_first.pdf")
+```
 
+```{r pde first}
 b_clean %>% 
   filter(grade == "1") %>%
   ggplot(aes(pde_raw)) +
@@ -361,19 +400,22 @@ b_clean %>%
                  color = "black",
                  fill = "lightblue") +
   geom_vline(aes(xintercept = 24),
-            color="black", linetype="dashed", size = 1) +
+             color="black", linetype="dashed", size = 1) +
   geom_vline(aes(xintercept = 10),
-            color="black", linetype="dashed", size = 0.5) +
-    geom_vline(aes(xintercept = 38),
-            color="black", linetype="dashed", size = 0.5) +
+             color="black", linetype="dashed", size = 0.5) +
+  geom_vline(aes(xintercept = 38),
+             color="black", linetype="dashed", size = 0.5) +
   xlim(0, 80) +
   scale_y_continuous(expand = expand_scale(mult = c(0, .1))) +
-  labs(x = "# of Pseudowords read in 45 seconds",
+  labs(title = "Pseudoword Fluency - First Grade",
+       x = "# of Pseudowords read in 45 seconds",
        y = "# of Students") +
   theme_classic()
+
+ggsave("pde_first.pdf")
 ```
 
-```{r}
+```{r swe second}
 b_clean %>% 
   filter(grade == "2") %>%
   ggplot(aes(swe_raw)) +
@@ -388,12 +430,15 @@ b_clean %>%
             color="black", linetype="dashed", size = 0.5) +
   xlim(0, 80) +
   scale_y_continuous(expand = expand_scale(mult = c(0, .1))) +
-  labs(title = "2nd Grade SWE Raw Scores",
+  labs(title = "Sight Word Fluency - Second Grade",
        x = "# of Sight Words Read in 45 seconds)",
        y = "# of Students") +
   theme_classic()
 
+ggsave("swe_second.pdf")
+```
 
+```{r pde second}
 b_clean %>% 
   filter(grade == "2") %>%
   ggplot(aes(pde_raw)) +
@@ -401,23 +446,24 @@ b_clean %>%
                  color = "black",
                  fill = "lightblue") +
   geom_vline(aes(xintercept = 27),
-            color="black", linetype="dashed", size = 1) +
+             color="black", linetype="dashed", size = 1) +
   geom_vline(aes(xintercept = 16),
-            color="black", linetype="dashed", size = 0.5) +
-    geom_vline(aes(xintercept = 38),
-            color="black", linetype="dashed", size = 0.5) +
+             color="black", linetype="dashed", size = 0.5) +
+  geom_vline(aes(xintercept = 38),
+             color="black", linetype="dashed", size = 0.5) +
   xlim(0, 80) +
   scale_y_continuous(expand = expand_scale(mult = c(0, .1))) +
-  labs(x = "# of Pseudowords read in 45 seconds",
+  labs(title = "Pseudoword Fluency - Second Grade",
+       x = "# of Pseudowords read in 45 seconds",
        y = "# of Students") +
   theme_classic()
 
-
+ggsave("pde_second.pdf")
 ```
 
 
 
-```{r}
+```{r towre means per grade and norms}
 b_clean %>% 
   filter(grade == "K") %>% 
   summarise(swe_raw = mean(na.omit(swe_raw)),
@@ -469,38 +515,80 @@ b_clean %>%
 ```{r towre swe hist, echo = FALSE, message = FALSE, warning = FALSE}
 # TOWRE_SWE 
 ggplot(b_clean, aes(swe_raw)) +
-  geom_histogram(aes( y = ..density..),
-                 binwidth = 5, 
-                 color = "black",
-                 fill = "white") +
   geom_density(aes(fill = grade), alpha = 0.3) +
-  labs(title = "TOWRE SWE",
+  geom_vline(data = b_clean %>% 
+               filter(grade == "K"), 
+             aes(xintercept = mean(na.omit(swe_raw))),
+             color = "red", 
+             linetype="dashed",
+             size = 0.5) +
+  geom_vline(data = b_clean %>% 
+               filter(grade == "1"), 
+             aes(xintercept = mean(na.omit(swe_raw))),
+             color = "darkgreen",
+             alpha = 0.7,
+             linetype="dashed",
+             size = 0.5) +
+  geom_vline(data = b_clean %>% 
+               filter(grade == "2"), 
+             aes(xintercept = mean(na.omit(swe_raw))),
+             color = "blue",
+             linetype="dashed",
+             size = 0.5,
+             alpha = 0.6) +
+  labs(title = "Sightword Fluency Distribution",
        x = "# Correct",
        y = "probability of a student obtaining this score") +
+  xlim(0, 80) +
+  scale_y_continuous(expand = expand_scale(mult = c(0, .1))) +
+  theme_classic()
+
+ggsave("swe_density_all.pdf")
+```
+
+```{r}
+# TOWRE_PDE
+ggplot(b_clean, aes(pde_raw)) +
+  geom_density(aes(fill = grade), alpha = 0.3) +
+  geom_vline(data = b_clean %>% 
+               filter(grade == "K"), 
+             aes(xintercept = mean(na.omit(pde_raw))),
+             color = "red", 
+             linetype="dashed",
+             size = 0.5) +
+  geom_vline(data = b_clean %>% 
+               filter(grade == "1"), 
+             aes(xintercept = mean(na.omit(pde_raw))),
+             color = "darkgreen",
+             alpha = 0.7,
+             linetype="dashed",
+             size = 0.5) +
+  geom_vline(data = b_clean %>% 
+               filter(grade == "2"), 
+             aes(xintercept = mean(na.omit(pde_raw))),
+             color = "blue",
+             linetype="dashed",
+             size = 0.5,
+             alpha = 0.6) +
+  labs(title = "Pseudoword Fluency Distribution",
+       x = "# Correct",
+       y = "probability of a student obtaining this score") +
+  scale_y_continuous(expand = expand_scale(mult = c(0, .1))) +
   xlim(0, 80) +
   theme_classic()
 
-# TOWRE_PDE
-ggplot(b_clean, aes(pde_raw)) +
-  geom_histogram(aes( y = ..density..),
-                 binwidth = 5, 
-                 color = "black",
-                 fill = "white") +
-  geom_density(aes(fill = grade), alpha = 0.3) +
-  labs(title = "TOWRE PDE",
-       x = "# Correct",
-       y = "probability of a student obtaining this score") +
-  xlim(0, 80) +
-  theme_classic()
+ggsave("pde_density_all.pdf")
 ```
 
 # WJ
 
-```{r}
+```{r wj means per grade}
 b_clean %>% 
   filter(grade == "K") %>% 
   summarise(wj_raw = mean(wj_raw),
             age = mean(age))
+# m = 18.05
+# 18 is K.3
 # kindergarten just about what you'd expect at K.3
 # would expect that slope from beginning of end to kindergarten would be higher than national average slope
 
@@ -508,28 +596,52 @@ b_clean %>%
   filter(grade == "1") %>% 
   summarise(wj_raw = mean(wj_raw),
             age = mean(age))
+# m = 42.17
+# 42 is 2.0
 # scoring near the beginning of 2nd grade
 
 b_clean %>% 
   filter(grade == "2") %>% 
   summarise(wj_raw = mean(wj_raw),
             age = mean(age))
-
+# m = 52.1
+# 52 is 3.5
 # start with WJ, show means for ages and say that they're acting like grade equivalent 3.5
 ```
 
 
 ```{r}
 ggplot(b_clean, aes(wj_raw)) +
-  geom_histogram(aes( y = ..density..),
-                 binwidth = 2, 
-                 color = "black",
-                 fill = "white") +
   geom_density(aes(fill = grade), alpha = 0.3) +
-  labs(title = "Woodjcock Johnson Raw (basal rule)",
+    geom_vline(data = b_clean %>% 
+               filter(grade == "K"), 
+             aes(xintercept = mean(na.omit(wj_raw))),
+             color = "red", 
+             linetype="dashed",
+             size = 0.5) +
+  geom_vline(data = b_clean %>% 
+               filter(grade == "1"), 
+             aes(xintercept = mean(na.omit(wj_raw))),
+             color = "darkgreen",
+             alpha = 0.7,
+             linetype="dashed",
+             size = 0.5) +
+  geom_vline(data = b_clean %>% 
+               filter(grade == "2"), 
+             aes(xintercept = mean(na.omit(wj_raw))),
+             color = "blue",
+             linetype="dashed",
+             size = 0.5,
+             alpha = 0.6) +
+  labs(title = "Letter-Word Identification Distribution",
        x = "# Correct",
        y = "probability of a student obtaining this score") +
+  scale_y_continuous(expand = expand_scale(mult = c(0, .1))) +
+  scale_x_continuous(limits = c(0, 70),
+                     breaks = c(0, 10, 20, 30, 40, 50, 60, 70)) +
   theme_classic()
+
+ggsave("wj_density_all.pdf")
 ```
 
 # Correlation Matrix
