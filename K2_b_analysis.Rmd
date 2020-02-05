@@ -138,6 +138,12 @@ h_cl1 <- ggplot(b_clean, aes(ctopp_l_raw)) +
                  color = "black",
                  fill = "white") +
   geom_density(aes(fill = grade), alpha = 0.3) +
+  stat_summary(fun.y = "mean",
+               geom = "line",
+               color = "blue") +
+  
+    # geom_vline(data = b_clean, aes(xintercept = mean(na.omit(ctopp_l_raw)),
+    #         color = grade), linetype="dashed", size=1) +
   labs(x = "CTOPP Letter Raw Score (s)",
        y = "Density") +
   xlim(0, 85) +
@@ -151,6 +157,7 @@ h_cl2 <- ggplot(b_clean, aes(ctopp_l_scale)) +
                  color = "black",
                  fill = "white") +
   geom_density(aes(fill = grade), alpha = 0.3) +
+ 
   labs(x = "CTOPP Letter Raw Score (s)",
        y = "Density") +
   theme_classic()
@@ -161,6 +168,201 @@ hp_cl <- ggarrange(h_cl1, h_cl2,
                    common.legend = TRUE)
 hp_cl
 ```
+### CTOPP Density Plots by Grade - Kindergarten
+
+Lines in the first plot denote letter naming norms for 6-year olds, *M* = 35, *SD* = 17. Lines in the second plot denote color naming norms for 6-year olds, *M* = 41, *SD* = 16. Mean age of Kindergarten class at time of testing was 5.92 years. 
+
+```{r}
+b_clean %>% 
+  filter(grade == "K") %>%
+  ggplot(aes(ctopp_l_raw)) +
+  geom_histogram(binwidth = 5, 
+                 color = "black",
+                 fill = "lightblue") +
+  geom_vline(aes(xintercept = 35),
+            color="black", linetype="dashed", size = 1) +
+  geom_vline(aes(xintercept = 18),
+            color="black", linetype="dashed", size = 0.5) +
+    geom_vline(aes(xintercept = 52),
+            color="black", linetype="dashed", size = 0.5) +
+  xlim(0, 80) +
+  scale_y_continuous(expand = expand_scale(mult = c(0, .1))) +
+  labs(title = "Kindergarten CTOPP Raw Scores",
+       x = "Letter Naming (s)",
+       y = "# of Students") +
+  theme_classic()
+
+
+b_clean %>% 
+  filter(grade == "K") %>%
+  ggplot(aes(ctopp_c_raw)) +
+  geom_histogram(binwidth = 5, 
+                 color = "black",
+                 fill = "lightblue") +
+  geom_vline(aes(xintercept = 41),
+            color="black", linetype="dashed", size = 1) +
+  geom_vline(aes(xintercept = 25),
+            color="black", linetype="dashed", size = 0.5) +
+    geom_vline(aes(xintercept = 57),
+            color="black", linetype="dashed", size = 0.5) +
+  xlim(0, 80) +
+  scale_y_continuous(expand = expand_scale(mult = c(0, .1))) +
+  labs(x = "Color Naming (s)",
+       y = "# of Students") +
+  theme_classic()
+```
+
+### First grade
+Lines in the first plot denote letter naming norms for 7-year olds, *M* = 23, *SD* = 8. Lines in the second plot denote color naming norms for 6-year olds, *M* = 41, *SD* = 16 (there are no color naming norms past age 6). Mean age of the first grade class at time of testing was 6.78 years. 
+
+```{r}
+# used 7 year old norms - could also use 6 for consistency
+b_clean %>% 
+  filter(grade == "1") %>%
+  ggplot(aes(ctopp_l_raw)) +
+  geom_histogram(binwidth = 5, 
+                 color = "black",
+                 fill = "lightblue") +
+  geom_vline(aes(xintercept = 23),
+            color="black", linetype="dashed", size = 1) +
+  geom_vline(aes(xintercept = 15),
+            color="black", linetype="dashed", size = 0.5) +
+    geom_vline(aes(xintercept = 31),
+            color="black", linetype="dashed", size = 0.5) +
+  xlim(0, 80) +
+  scale_y_continuous(expand = expand_scale(mult = c(0, .1))) +
+  labs(title = "First Grade CTOPP Raw Scores",
+       x = "Letter Naming (s)",
+       y = "# of Students") +
+  theme_classic()
+
+# no norms for color naming past 6 yrs old so used 6 yr old norms bc many students are still 6
+b_clean %>% 
+  filter(grade == "1") %>%
+  ggplot(aes(ctopp_c_raw)) +
+  geom_histogram(binwidth = 5, 
+                 color = "black",
+                 fill = "lightblue") +
+  geom_vline(aes(xintercept = 41),
+            color="black", linetype="dashed", size = 1) +
+  geom_vline(aes(xintercept = 25),
+            color="black", linetype="dashed", size = 0.5) +
+    geom_vline(aes(xintercept = 57),
+            color="black", linetype="dashed", size = 0.5) +
+  xlim(0, 80) +
+  scale_y_continuous(expand = expand_scale(mult = c(0, .1))) +
+  labs(x = "Color Naming (s)",
+       y = "# of Students") +
+  theme_classic()
+
+# mean age = 6.78
+  # 2nd - mean age = 7.52
+```
+
+### Second grade
+
+Lines in the first plot denote letter naming norms for 8-year olds, *M* = 20, *SD* = 5. Mean age of the second grade class at time of testing was 7.52 years. 
+```{r}
+# used 8 year old norms - could also use 7
+b_clean %>% 
+  filter(grade == "2") %>%
+  ggplot(aes(ctopp_l_raw)) +
+  geom_histogram(binwidth = 5, 
+                 color = "black",
+                 fill = "lightblue") +
+  geom_vline(aes(xintercept = 20),
+            color="black", linetype="dashed", size = 1) +
+  geom_vline(aes(xintercept = 15),
+            color="black", linetype="dashed", size = 0.5) +
+    geom_vline(aes(xintercept = 25),
+            color="black", linetype="dashed", size = 0.5) +
+  xlim(0, 80) +
+  scale_y_continuous(expand = expand_scale(mult = c(0, .1))) +
+  labs(title = "Second Grade CTOPP Raw Scores",
+       x = "Letter Naming (s)",
+       y = "# of Students") +
+  theme_classic()
+
+# no norms for color naming past 6 yrs old 
+b_clean %>% 
+  filter(grade == "2") %>%
+  ggplot(aes(ctopp_c_raw)) +
+  geom_histogram(binwidth = 5, 
+                 color = "black",
+                 fill = "lightblue") +
+  xlim(0, 80) +
+  scale_y_continuous(expand = expand_scale(mult = c(0, .1))) +
+  labs(x = "Color Naming (s)",
+       y = "# of Students") +
+  theme_classic()
+```
+
+
+```{r}
+
+ggplot(b_clean, aes(ctopp_c_raw)) +
+  geom_density(aes(fill = grade), alpha = 0.3) +
+  geom_vline(data = b_clean %>% 
+            filter(grade == "K"), 
+             aes(xintercept = mean(na.omit(ctopp_c_raw)),
+                 color = grade), 
+             linetype="dashed",
+             size = 0.5) +
+  geom_vline(data = b_clean %>% 
+            filter(grade == "1"), 
+             aes(xintercept = mean(na.omit(ctopp_c_raw)),
+             color = grade),
+             linetype="dashed",
+             size = 0.5) +
+    geom_vline(data = b_clean %>% 
+              filter(grade == "2"), 
+             aes(xintercept = mean(na.omit(ctopp_c_raw)),
+                 color = grade),
+             linetype="dashed",
+             size = 0.5,
+             alpha = 0.6) +
+  scale_color_discrete() +
+labs(x = "color naming (seconds)",
+     y = "probability of a student obtaining this score") +
+  xlim(0, 85) +
+  scale_x_continuous(limits = c(0, 90),
+                     breaks = c(10, 20, 30, 40, 50, 60, 70, 80)) +
+theme_classic()
+
+ggplot(b_clean, aes(ctopp_l_raw)) +
+  geom_density(aes(fill = grade), alpha = 0.3) +
+  geom_vline(data = b_clean %>% 
+            filter(grade == "K"), 
+             aes(xintercept = mean(na.omit(ctopp_l_raw)),
+                 color = grade), 
+             linetype="dashed",
+             size = 0.5) +
+  geom_vline(data = b_clean %>% 
+            filter(grade == "1"), 
+             aes(xintercept = mean(na.omit(ctopp_l_raw)),
+             color = grade),
+             linetype="dashed",
+             size = 0.5) +
+    geom_vline(data = b_clean %>% 
+              filter(grade == "2"), 
+             aes(xintercept = mean(na.omit(ctopp_l_raw)),
+                 color = grade),
+             linetype="dashed",
+             size = 0.5,
+             alpha = 0.6) +
+  scale_color_discrete() +
+labs(x = "letter naming (seconds)",
+     y = "probability of a student obtaining this score") +
+  xlim(0, 85) +
+  theme_classic()
+
+
+
+?scale_color_discrete
+```
+
+
+
 
 ### CTOPP Boxplots
 
@@ -266,7 +468,7 @@ scatter_c
 # maybe add r on here
 
 ```{r}
-s_cl_all <- ggplot(b_clean, aes(ctopp_c_raw, ctopp_l_raw)) +
+s_cl_all <- ggplot(b_clean, aes(ctopp_c_raw, ctopp_l_raw, color = grade)) +
   geom_point(alpha = 0.5) +
   labs(title = "CTOPP Raw Scores",
        x = "Color Naming (s)",
@@ -284,7 +486,9 @@ b_clean %>%
   labs(title = "Kindergarten CTOPP Raw Scores",
        x = "Color Naming (s)",
        y = "Letter Naming (s)") +
-  theme_classic()
+  xlim(0, 60) +
+  ylim(0, 80) +
+  theme_classic() 
 
 b_clean %>% 
   filter(grade == "1") %>% 
@@ -293,6 +497,8 @@ b_clean %>%
   labs(title = "1st Grade CTOPP Raw Scores",
        x = "Color Naming (s)",
        y = "Letter Naming (s)") +
+  xlim(0, 60) +
+  ylim(0, 80) +
   theme_classic()
 
 b_clean %>% 
@@ -302,9 +508,107 @@ b_clean %>%
   labs(title = "2nd Grade CTOPP Raw Scores",
        x = "Color Naming (s)",
        y = "Letter Naming (s)") +
+  xlim(0, 60) +
+  ylim(0, 80) +
+  theme_classic()
+
+
+```
+### CTOPP vs. SWE
+
+```{r}
+ggplot(b_clean, aes(ctopp_l_raw, swe_raw, color = grade)) +
+  geom_point(alpha = 0.5) +
+  labs(title = "CTOPP Letter vs. TOWRE SWE",
+       x = "Letter Naming (s)",
+       y = "# Sight Words Correct") +
+  xlim(10, 80) +
+  theme_classic()
+
+ggplot(b_clean, aes(ctopp_c_raw, swe_raw, color = grade)) +
+  geom_point(alpha = 0.5) +
+  labs(title = "CTOPP Color vs. TOWRE SWE",
+       x = "Color Naming (s)",
+       y = "# Sight Words Correct") +
+  xlim(10, 80) +
+  theme_classic()
+
+```
+
+
+
+### CTOPP VS. PDE
+
+```{r}
+ggplot(b_clean, aes(ctopp_l_raw, pde_raw, color = grade)) +
+  geom_point(alpha = 0.5) +
+  labs(title = "CTOPP Letter vs. TOWRE PDE",
+       x = "Letter Naming (s)",
+       y = "# of Pseudowords Correct") +
+  xlim(10, 80) +
+  theme_classic()
+
+ggplot(b_clean, aes(ctopp_c_raw, pde_raw, color = grade)) +
+  geom_point(alpha = 0.5) +
+  labs(title = "CTOPP Color vs. TOWRE PDE",
+       x = "Color Naming (s)",
+       y = "# of Pseudowords Correct") +
+  xlim(10, 80) +
   theme_classic()
 ```
 
+
+### CTOPP VS. WJ
+
+```{r}
+ggplot(b_clean, aes(ctopp_l_raw, wj_raw, color = grade)) +
+  geom_point(alpha = 0.5) +
+  labs(title = "CTOPP Letter vs. WJ",
+       x = "Letter Naming (s)",
+       y = "# of Items Correct") +
+  xlim(10, 80) +
+  theme_classic()
+
+ggplot(b_clean, aes(ctopp_c_raw, wj_raw, color = grade)) +
+  geom_point(alpha = 0.5) +
+  labs(title = "CTOPP Color vs. WJ",
+       x = "Color Naming (s)",
+       y = "# of Items Correct") +
+  xlim(10, 80) +
+  theme_classic()
+```
+
+```{r}
+ggplot(b_clean, aes(swe_raw, wj_raw, color = grade)) +
+  geom_point(alpha = 0.5) +
+  labs(title = "SWE vs. WJ",
+       x = "Sight Word Naming",
+       y = "# of Items Correct") +
+  xlim(10, 80) +
+  theme_classic()
+
+ggplot(b_clean, aes(pde_raw, wj_raw, color = grade)) +
+  geom_point(alpha = 0.5) +
+  labs(title = "PDE vs. WJ",
+       x = "Pseudoword Naming",
+       y = "# of Items Correct") +
+  xlim(10, 80) +
+  theme_classic()
+```
+
+```{r}
+b_clean %>% 
+  filter(grade == "K") %>% 
+  summarise(n = n())
+
+b_clean %>% 
+  filter(grade == "1") %>% 
+  summarise(n = n())
+
+b_clean %>% 
+  filter(grade == "2") %>% 
+  summarise(n = n())
+```
 
 
 ## TOWRE
