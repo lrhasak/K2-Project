@@ -1,0 +1,604 @@
+---
+title: "Behaviorals for Synapse"
+author: "Lindsey Hasak"
+date: "2/4/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+# load libraries
+library(Hmisc)      # for correlation matrix
+library(psych)      # for descriptive statistics
+library(knitr)      # for knitting to pdf
+library(kableExtra) # for making pretty tables
+library(ggpubr)     # for arrangling plots
+library(corrplot)   # for making correlogram
+library(forcats)    # for reordering factor levels
+library(tidyverse)  # for data wrangling
+```
+
+## Load and recode; summary statistics
+```{r data cleaning, echo = FALSE, message = FALSE}
+# load the data and indicate how NAs are entered
+b_data <- read_csv("K2Behavioral_T1.csv", col_names = TRUE, na = c("N/A"))
+colnames(b_data)
+
+b_clean <- b_data %>% 
+  # rename columns for consistency 
+  rename(part_id = participant_id,
+         ctopp_c_raw = ctopp_color_raw,
+         ctopp_c_scale = ctopp_color_scaled,
+         ctopp_l_raw = ctopp_lttr_raw,
+         ctopp_l_scale = ctopp_lttr_scaled,
+         swe_raw = swe_raw2,
+         pde_raw = pde_raw_final,
+         swe_age = twre_scaled_age,
+         pde_age = pde_scaled_age,
+         swe_grade = swe_scaled_grade,
+         pde_grade = pde_scaled_grade,
+         wj_raw = wj_corr_final,
+         wj_age_b = wj_ageeq_basal,
+         wj_grade_b = wj_gradeeq_basal) %>% 
+  # separate age column into year, month, and day columns
+  separate(col = k2_age,
+           into = c("year", "month", "day"),
+           sep = "-") %>% # indicate separating character
+  # separate grade column into grade and months in grade
+  separate(col = k2_grade,
+           into = c("grade", "g_month"),
+           sep = "_") %>% 
+  # reorders grade variable to show in this order for plotting
+  mutate(grade = fct_relevel(grade,
+                             "K", "1", "2")) %>% 
+  # convert most columns to doubles (numeric values)
+  type_convert()
+  
+# now age back as new column in decimals
+b_clean$age <- b_clean$year + (b_clean$month/12) + (b_clean$day/365)
+
+# and finally look at data structure
+head(b_clean)
+
+# still need to edit this to make sense of WJ age and grade equivalents
+```
+
+
+```{r describe stats, message = FALSE, echo = FALSE, warning = FALSE}
+# deselect unecessary columns and get summary statistics
+b_clean_descr <- b_clean %>% 
+  select(- part_id,
+         - k2behav_examiner,
+         - k2_hand,
+         - k2behav_notes,
+         - year,
+         - month,
+         - day,
+         - grade,
+         - g_month,
+         # leave out these two columns for now
+         - twre_scaledsc_age,
+         - twre_scaledsc_grade) %>% 
+  # puts age first
+  select(age, everything())
+
+# put output in a nice table
+b_clean_descr <- data.frame(describe(b_clean_descr))
+
+# kable is a simple table generator
+kable(b_clean_descr, 
+      digits = 3, # 3 digits (or however many you want)
+      format = "latex", 
+      caption = "K2 Behavioral Descriptive Statistics") %>% 
+  kable_styling(latex_options = c("striped", "scale_down")) # from the kableExtra package
+```
+
+# CTOPP 
+
+### Density plot - all grades
+
+Current colors for the mean lines are wrong and need to be fixed.
+
+```{r}
+
+ggplot(b_clean, aes(ctopp_c_raw)) +
+  geom_density(aes(fill = grade), alpha = 0.3) +
+  geom_vline(data = b_clean %>% 
+            filter(grade == "K"), 
+             aes(xintercept = mean(na.omit(ctopp_c_raw)),
+                 color = grade), 
+             linetype="dashed",
+             size = 0.5) +
+  geom_vline(data = b_clean %>% 
+            filter(grade == "1"), 
+             aes(xintercept = mean(na.omit(ctopp_c_raw)),
+             color = grade),
+             linetype="dashed",
+             size = 0.5) +
+    geom_vline(data = b_clean %>% 
+              filter(grade == "2"), 
+             aes(xintercept = mean(na.omit(ctopp_c_raw)),
+                 color = grade),
+             linetype="dashed",
+             size = 0.5,
+             alpha = 0.6) +
+  scale_color_discrete() +
+labs(x = "color naming (seconds)",
+     y = "probability of a student obtaining this score") +
+  xlim(0, 85) +
+  scale_x_continuous(limits = c(0, 90),
+                     breaks = c(10, 20, 30, 40, 50, 60, 70, 80)) +
+theme_classic()
+
+ggplot(b_clean, aes(ctopp_l_raw)) +
+  geom_density(aes(fill = grade), alpha = 0.3) +
+  geom_vline(data = b_clean %>% 
+            filter(grade == "K"), 
+             aes(xintercept = mean(na.omit(ctopp_l_raw)),
+                 color = grade), 
+             linetype="dashed",
+             size = 0.5) +
+  geom_vline(data = b_clean %>% 
+            filter(grade == "1"), 
+             aes(xintercept = mean(na.omit(ctopp_l_raw)),
+             color = grade),
+             linetype="dashed",
+             size = 0.5) +
+    geom_vline(data = b_clean %>% 
+              filter(grade == "2"), 
+             aes(xintercept = mean(na.omit(ctopp_l_raw)),
+                 color = grade),
+             linetype="dashed",
+             size = 0.5,
+             alpha = 0.6) +
+  scale_color_discrete() +
+labs(x = "letter naming (seconds)",
+     y = "probability of a student obtaining this score") +
+  xlim(0, 85) +
+  theme_classic()
+```
+
+
+### CTOPP Density Plots by Grade - Kindergarten
+
+Lines in the first plot denote letter naming norms for 6-year olds, *M* = 35, *SD* = 17. Lines in the second plot denote color naming norms for 6-year olds, *M* = 41, *SD* = 16. Mean age of Kindergarten class at time of testing was 5.92 years. 
+
+```{r}
+b_clean %>% 
+  filter(grade == "K") %>%
+  ggplot(aes(ctopp_l_raw)) +
+  geom_histogram(binwidth = 5, 
+                 color = "black",
+                 fill = "lightblue") +
+  geom_vline(aes(xintercept = 35),
+            color="black", linetype="dashed", size = 1) +
+  geom_vline(aes(xintercept = 18),
+            color="black", linetype="dashed", size = 0.5) +
+    geom_vline(aes(xintercept = 52),
+            color="black", linetype="dashed", size = 0.5) +
+  xlim(0, 80) +
+  scale_y_continuous(expand = expand_scale(mult = c(0, .1))) +
+  labs(title = "Kindergarten CTOPP Raw Scores",
+       x = "Letter Naming (s)",
+       y = "# of Students") +
+  theme_classic()
+
+
+b_clean %>% 
+  filter(grade == "K") %>%
+  ggplot(aes(ctopp_c_raw)) +
+  geom_histogram(binwidth = 5, 
+                 color = "black",
+                 fill = "lightblue") +
+  geom_vline(aes(xintercept = 41),
+            color="black", linetype="dashed", size = 1) +
+  geom_vline(aes(xintercept = 25),
+            color="black", linetype="dashed", size = 0.5) +
+    geom_vline(aes(xintercept = 57),
+            color="black", linetype="dashed", size = 0.5) +
+  xlim(0, 80) +
+  scale_y_continuous(expand = expand_scale(mult = c(0, .1))) +
+  labs(x = "Color Naming (s)",
+       y = "# of Students") +
+  theme_classic()
+```
+
+### First grade
+Lines in the first plot denote letter naming norms for 7-year olds, *M* = 23, *SD* = 8. Lines in the second plot denote color naming norms for 6-year olds, *M* = 41, *SD* = 16 (there are no color naming norms past age 6). Mean age of the first grade class at time of testing was 6.78 years. 
+
+```{r}
+# used 7 year old norms - could also use 6 for consistency
+b_clean %>% 
+  filter(grade == "1") %>%
+  ggplot(aes(ctopp_l_raw)) +
+  geom_histogram(binwidth = 5, 
+                 color = "black",
+                 fill = "lightblue") +
+  geom_vline(aes(xintercept = 23),
+            color="black", linetype="dashed", size = 1) +
+  geom_vline(aes(xintercept = 15),
+            color="black", linetype="dashed", size = 0.5) +
+    geom_vline(aes(xintercept = 31),
+            color="black", linetype="dashed", size = 0.5) +
+  xlim(0, 80) +
+  scale_y_continuous(expand = expand_scale(mult = c(0, .1))) +
+  labs(title = "First Grade CTOPP Raw Scores",
+       x = "Letter Naming (s)",
+       y = "# of Students") +
+  theme_classic()
+
+# no norms for color naming past 6 yrs old so used 6 yr old norms bc many students are still 6
+b_clean %>% 
+  filter(grade == "1") %>%
+  ggplot(aes(ctopp_c_raw)) +
+  geom_histogram(binwidth = 5, 
+                 color = "black",
+                 fill = "lightblue") +
+  geom_vline(aes(xintercept = 41),
+            color="black", linetype="dashed", size = 1) +
+  geom_vline(aes(xintercept = 25),
+            color="black", linetype="dashed", size = 0.5) +
+    geom_vline(aes(xintercept = 57),
+            color="black", linetype="dashed", size = 0.5) +
+  xlim(0, 80) +
+  scale_y_continuous(expand = expand_scale(mult = c(0, .1))) +
+  labs(x = "Color Naming (s)",
+       y = "# of Students") +
+  theme_classic()
+
+# mean age = 6.78
+  # 2nd - mean age = 7.52
+```
+
+### Second grade
+
+Lines in the first plot denote letter naming norms for 8-year olds, *M* = 20, *SD* = 5. Mean age of the second grade class at time of testing was 7.52 years. 
+```{r}
+# used 8 year old norms - could also use 7
+b_clean %>% 
+  filter(grade == "2") %>%
+  ggplot(aes(ctopp_l_raw)) +
+  geom_histogram(binwidth = 5, 
+                 color = "black",
+                 fill = "lightblue") +
+  geom_vline(aes(xintercept = 20),
+            color="black", linetype="dashed", size = 1) +
+  geom_vline(aes(xintercept = 15),
+            color="black", linetype="dashed", size = 0.5) +
+    geom_vline(aes(xintercept = 25),
+            color="black", linetype="dashed", size = 0.5) +
+  xlim(0, 80) +
+  scale_y_continuous(expand = expand_scale(mult = c(0, .1))) +
+  labs(title = "Second Grade CTOPP Raw Scores",
+       x = "Letter Naming (s)",
+       y = "# of Students") +
+  theme_classic()
+
+# no norms for color naming past 6 yrs old 
+b_clean %>% 
+  filter(grade == "2") %>%
+  ggplot(aes(ctopp_c_raw)) +
+  geom_histogram(binwidth = 5, 
+                 color = "black",
+                 fill = "lightblue") +
+  xlim(0, 80) +
+  scale_y_continuous(expand = expand_scale(mult = c(0, .1))) +
+  labs(x = "Color Naming (s)",
+       y = "# of Students") +
+  theme_classic()
+```
+
+
+# TOWRE Histograms
+Norms from chart on page 85
+
+```{r}
+b_clean %>% 
+  filter(grade == "K") %>%
+  ggplot(aes(swe_raw)) +
+  geom_histogram(binwidth = 5, 
+                 color = "black",
+                 fill = "lightblue") +
+  geom_vline(aes(xintercept = 29),
+            color="black", linetype="dashed", size = 1) +
+  geom_vline(aes(xintercept = 13),
+            color="black", linetype="dashed", size = 0.5) +
+    geom_vline(aes(xintercept = 42),
+            color="black", linetype="dashed", size = 0.5) +
+  xlim(0, 80) +
+  scale_y_continuous(expand = expand_scale(mult = c(0, .1))) +
+  labs(title = "Kindergarten SWE Raw Scores",
+       x = "# of Sight Words Read in 45 seconds)",
+       y = "# of Students") +
+  theme_classic()
+
+
+b_clean %>% 
+  filter(grade == "K") %>%
+  ggplot(aes(pde_raw)) +
+  geom_histogram(binwidth = 5, 
+                 color = "black",
+                 fill = "lightblue") +
+  geom_vline(aes(xintercept = 13),
+            color="black", linetype="dashed", size = 1) +
+  geom_vline(aes(xintercept = 4),
+            color="black", linetype="dashed", size = 0.5) +
+    geom_vline(aes(xintercept = 22),
+            color="black", linetype="dashed", size = 0.5) +
+  xlim(0, 80) +
+  scale_y_continuous(expand = expand_scale(mult = c(0, .1))) +
+  labs(x = "# of Pseudowords read in 45 seconds",
+       y = "# of Students") +
+  theme_classic()
+```
+### First grade TOWRE histograms
+
+```{r}
+b_clean %>% 
+  filter(grade == "1") %>%
+  ggplot(aes(swe_raw)) +
+  geom_histogram(binwidth = 5, 
+                 color = "black",
+                 fill = "lightblue") +
+  geom_vline(aes(xintercept = 47),
+            color="black", linetype="dashed", size = 1) +
+  geom_vline(aes(xintercept = 28),
+            color="black", linetype="dashed", size = 0.5) +
+    geom_vline(aes(xintercept = 66),
+            color="black", linetype="dashed", size = 0.5) +
+  xlim(0, 80) +
+  scale_y_continuous(expand = expand_scale(mult = c(0, .1))) +
+  labs(title = "1st Grade SWE Raw Scores",
+       x = "# of Sight Words Read in 45 seconds)",
+       y = "# of Students") +
+  theme_classic()
+
+
+b_clean %>% 
+  filter(grade == "1") %>%
+  ggplot(aes(pde_raw)) +
+  geom_histogram(binwidth = 5, 
+                 color = "black",
+                 fill = "lightblue") +
+  geom_vline(aes(xintercept = 24),
+            color="black", linetype="dashed", size = 1) +
+  geom_vline(aes(xintercept = 10),
+            color="black", linetype="dashed", size = 0.5) +
+    geom_vline(aes(xintercept = 38),
+            color="black", linetype="dashed", size = 0.5) +
+  xlim(0, 80) +
+  scale_y_continuous(expand = expand_scale(mult = c(0, .1))) +
+  labs(x = "# of Pseudowords read in 45 seconds",
+       y = "# of Students") +
+  theme_classic()
+```
+
+```{r}
+b_clean %>% 
+  filter(grade == "2") %>%
+  ggplot(aes(swe_raw)) +
+  geom_histogram(binwidth = 5, 
+                 color = "black",
+                 fill = "lightblue") +
+  geom_vline(aes(xintercept = 55),
+            color="black", linetype="dashed", size = 1) +
+  geom_vline(aes(xintercept = 42),
+            color="black", linetype="dashed", size = 0.5) +
+    geom_vline(aes(xintercept = 68),
+            color="black", linetype="dashed", size = 0.5) +
+  xlim(0, 80) +
+  scale_y_continuous(expand = expand_scale(mult = c(0, .1))) +
+  labs(title = "2nd Grade SWE Raw Scores",
+       x = "# of Sight Words Read in 45 seconds)",
+       y = "# of Students") +
+  theme_classic()
+
+
+b_clean %>% 
+  filter(grade == "2") %>%
+  ggplot(aes(pde_raw)) +
+  geom_histogram(binwidth = 5, 
+                 color = "black",
+                 fill = "lightblue") +
+  geom_vline(aes(xintercept = 27),
+            color="black", linetype="dashed", size = 1) +
+  geom_vline(aes(xintercept = 16),
+            color="black", linetype="dashed", size = 0.5) +
+    geom_vline(aes(xintercept = 38),
+            color="black", linetype="dashed", size = 0.5) +
+  xlim(0, 80) +
+  scale_y_continuous(expand = expand_scale(mult = c(0, .1))) +
+  labs(x = "# of Pseudowords read in 45 seconds",
+       y = "# of Students") +
+  theme_classic()
+
+
+```
+
+
+
+```{r}
+b_clean %>% 
+  filter(grade == "K") %>% 
+  summarise(swe_raw = mean(na.omit(swe_raw)),
+            pde_raw = mean(na.omit(pde_raw)),
+            age = mean(age))
+# mean swe - 9.83
+# mean pde = 5.76
+# mean age = 5.92
+# 6 yr old swe norm - mean 29; sd = 16
+# 6 yr old pde norm - m 13; sd 9
+
+b_clean %>% 
+  filter(grade == "K",
+         age >= 6) %>% 
+  summarise(swe_raw = mean(na.omit(swe_raw)),
+            pde_raw = mean(na.omit(pde_raw)),
+            age = mean(age))
+# swe mean = 10.25
+# pde mean = 7
+# age = 6.29
+
+b_clean %>% 
+  filter(grade == "1") %>% 
+   summarise(swe_raw = mean(swe_raw),
+            pde_raw = mean(pde_raw),
+            age = mean(age))
+
+# mean swe - 44
+# mean pde = 19.39
+# mean age = 6.78
+# 7 yr old swe norm - mean 47; sd = 19
+# 7 yr old pde norm - m 24; sd - 14
+
+b_clean %>% 
+  filter(grade == "2") %>% 
+    summarise(swe_raw = mean(swe_raw),
+            pde_raw = mean(pde_raw),
+            age = mean(age))
+
+# mean swe - 55.4
+# mean pde = 27.1
+# mean age = 7.5
+# 8 yr old swe norm - mean 55; sd = 13
+# 8 yr old pde norm - m 27; sd 11
+
+```
+
+
+```{r towre swe hist, echo = FALSE, message = FALSE, warning = FALSE}
+# TOWRE_SWE 
+ggplot(b_clean, aes(swe_raw)) +
+  geom_histogram(aes( y = ..density..),
+                 binwidth = 5, 
+                 color = "black",
+                 fill = "white") +
+  geom_density(aes(fill = grade), alpha = 0.3) +
+  labs(title = "TOWRE SWE",
+       x = "# Correct",
+       y = "probability of a student obtaining this score") +
+  xlim(0, 80) +
+  theme_classic()
+
+# TOWRE_PDE
+ggplot(b_clean, aes(pde_raw)) +
+  geom_histogram(aes( y = ..density..),
+                 binwidth = 5, 
+                 color = "black",
+                 fill = "white") +
+  geom_density(aes(fill = grade), alpha = 0.3) +
+  labs(title = "TOWRE PDE",
+       x = "# Correct",
+       y = "probability of a student obtaining this score") +
+  xlim(0, 80) +
+  theme_classic()
+```
+
+# WJ
+
+```{r}
+b_clean %>% 
+  filter(grade == "K") %>% 
+  summarise(wj_raw = mean(wj_raw),
+            age = mean(age))
+# kindergarten just about what you'd expect at K.3
+# would expect that slope from beginning of end to kindergarten would be higher than national average slope
+
+b_clean %>% 
+  filter(grade == "1") %>% 
+  summarise(wj_raw = mean(wj_raw),
+            age = mean(age))
+# scoring near the beginning of 2nd grade
+
+b_clean %>% 
+  filter(grade == "2") %>% 
+  summarise(wj_raw = mean(wj_raw),
+            age = mean(age))
+
+# start with WJ, show means for ages and say that they're acting like grade equivalent 3.5
+```
+
+
+```{r}
+ggplot(b_clean, aes(wj_raw)) +
+  geom_histogram(aes( y = ..density..),
+                 binwidth = 2, 
+                 color = "black",
+                 fill = "white") +
+  geom_density(aes(fill = grade), alpha = 0.3) +
+  labs(title = "Woodjcock Johnson Raw (basal rule)",
+       x = "# Correct",
+       y = "probability of a student obtaining this score") +
+  theme_classic()
+```
+
+# Correlation Matrix
+
+```{r create data for corr matrix, echo = FALSE, warning = FALSE}
+# select only numeric columns to use for correlation matrix (add WJ scaled scores later)
+b_corr <- b_clean %>% 
+  select(ctopp_c_raw,
+         ctopp_c_scale,
+         ctopp_l_raw,
+         ctopp_l_scale,
+         swe_raw,
+         swe_age,
+         swe_grade,
+         pde_raw,
+         pde_age,
+         pde_grade,
+         wj_raw,
+         age) %>% 
+  na.omit()
+```
+
+```{r correlation matrix, echo = FALSE, warning = FALSE}
+
+# create correlation matrix (cor from package corrplot)
+b_matrix <- cor(b_corr)
+
+# something I found online to be able to see values in correlation matrix 
+library(Hmisc)
+res <- rcorr(as.matrix(b_corr))
+
+# custom function I copied and pasted - need to find link
+flattenCorrMatrix <- function(cormat, pmat) {
+  ut <- upper.tri(cormat)
+  data.frame(
+    row = rownames(cormat)[row(cormat)[ut]],
+    column = rownames(cormat)[col(cormat)[ut]],
+    cor  =(cormat)[ut],
+    p = pmat[ut]
+    )
+}
+
+```
+
+```{r correlogram, echo = FALSE, warning = FALSE}
+
+raw_perform <- b_corr %>% 
+  select(ctopp_c_raw,
+         ctopp_l_raw,
+         swe_raw,
+         pde_raw,
+         wj_raw,
+         age) %>% 
+  mutate(ctopp_c_raw = ctopp_c_raw*(-1),
+         ctopp_l_raw = ctopp_l_raw*(-1))
+
+raw_matrix <- cor(raw_perform)
+
+raw_test <- cor.mtest(raw_perform, conf.level = .95)
+```
+
+```{r}
+corrplot(raw_matrix, 
+         p.mat = raw_test$p, 
+         insig = "label_sig",
+         sig.level = c(.001, .01, .05),
+         pch.cex = .7, 
+         pch.col = "white",
+         tl.col = "black")
+```
+
+
