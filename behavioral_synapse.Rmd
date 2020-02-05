@@ -173,7 +173,7 @@ ggsave("ctoppl_density_all.pdf")
 Lines in the first plot denote letter naming norms for 6-year olds, *M* = 35, *SD* = 17. Lines in the second plot denote color naming norms for 6-year olds, *M* = 41, *SD* = 16. Mean age of Kindergarten class at time of testing was 5.92 years. 
 
 ```{r}
-b_clean %>% 
+l1 <- b_clean %>% 
   filter(grade == "K") %>%
   ggplot(aes(ctopp_l_raw)) +
   geom_histogram(binwidth = 5, 
@@ -186,7 +186,8 @@ b_clean %>%
     geom_vline(aes(xintercept = 52),
             color="black", linetype="dashed", size = 0.5) +
   xlim(0, 80) +
-  scale_y_continuous(expand = expand_scale(mult = c(0, .1))) +
+   scale_y_continuous(limits = c(0, 14),
+                     expand = expand_scale(mult = c(0, .1))) +
   labs(title = "Letter Fluency - Kindergarten",
        x = "Letter Naming (s)",
        y = "# of Students") +
@@ -197,7 +198,7 @@ ggsave("ctoppl_kindergarten.pdf")
 
 ```{r ctopp color k}
 
-b_clean %>% 
+c1 <- b_clean %>% 
   filter(grade == "K") %>%
   ggplot(aes(ctopp_c_raw)) +
   geom_histogram(binwidth = 5, 
@@ -210,7 +211,8 @@ b_clean %>%
   geom_vline(aes(xintercept = 57),
              color="black", linetype="dashed", size = 0.5) +
   xlim(0, 80) +
-  scale_y_continuous(expand = expand_scale(mult = c(0, .1))) +
+  scale_y_continuous(limits = c(0, 14),
+                     expand = expand_scale(mult = c(0, .1))) +
   labs(title = "Color Fluency - Kindergarten", 
        x = "Color Naming (s)",
        y = "# of Students") +
@@ -224,7 +226,7 @@ Lines in the first plot denote letter naming norms for 7-year olds, *M* = 23, *S
 
 ```{r ctopp l first grade}
 # used 7 year old norms - could also use 6 for consistency
-b_clean %>% 
+l2 <- b_clean %>% 
   filter(grade == "1") %>%
   ggplot(aes(ctopp_l_raw)) +
   geom_histogram(binwidth = 5, 
@@ -237,7 +239,8 @@ b_clean %>%
   geom_vline(aes(xintercept = 31),
              color="black", linetype="dashed", size = 0.5) +
   xlim(0, 80) +
-  scale_y_continuous(expand = expand_scale(mult = c(0, .1))) +
+   scale_y_continuous(limits = c(0, 14),
+                     expand = expand_scale(mult = c(0, .1))) +
   labs(title = "Letter Fluency - First Grade",
        x = "Letter Naming (s)",
        y = "# of Students") +
@@ -248,7 +251,7 @@ ggsave("ctoppl_first.pdf")
 
 ```{r ctopp c first grade}
 # no norms for color naming past 6 yrs old so used 6 yr old norms bc many students are still 6
-b_clean %>% 
+c2 <- b_clean %>% 
   filter(grade == "1") %>%
   ggplot(aes(ctopp_c_raw)) +
   geom_histogram(binwidth = 5, 
@@ -261,7 +264,8 @@ b_clean %>%
   geom_vline(aes(xintercept = 57),
              color="black", linetype="dashed", size = 0.5) +
   xlim(0, 80) +
-  scale_y_continuous(expand = expand_scale(mult = c(0, .1))) +
+   scale_y_continuous(limits = c(0, 14),
+                     expand = expand_scale(mult = c(0, .1))) +
   labs(title = "Color Fluency - First Grade",
        x = "Color Naming (s)",
        y = "# of Students") +
@@ -275,12 +279,13 @@ ggsave("ctoppc_first.pdf")
 ### Second grade
 
 Lines in the first plot denote letter naming norms for 8-year olds, *M* = 20, *SD* = 5. Mean age of the second grade class at time of testing was 7.52 years. 
-```{r}
+```{r ctopp l second}
 # used 8 year old norms - could also use 7
-b_clean %>% 
-  filter(grade == "2") %>%
-  ggplot(aes(ctopp_l_raw)) +
+l3 <- b_clean %>% 
+  filter(grade == "2") %>% 
+  ggplot(aes((ctopp_l_raw))) +
   geom_histogram(binwidth = 5, 
+                 na.rm = TRUE,
                  color = "black",
                  fill = "lightblue") +
   geom_vline(aes(xintercept = 20),
@@ -290,7 +295,8 @@ b_clean %>%
     geom_vline(aes(xintercept = 25),
             color="black", linetype="dashed", size = 0.5) +
   xlim(0, 80) +
-  scale_y_continuous(expand = expand_scale(mult = c(0, .1))) +
+  scale_y_continuous(limits = c(0, 14),
+                     expand = expand_scale(mult = c(0, .1))) +
   labs(title = "Letter Fluency - Second Grade",
        x = "Letter Naming (s)",
        y = "# of Students") +
@@ -299,16 +305,17 @@ b_clean %>%
 ggsave("ctoppl_second.pdf")
 ```
 
-```{r}
+```{r ctopp c second}
 # no norms for color naming past 6 yrs old 
-b_clean %>% 
+c3 <- b_clean %>% 
   filter(grade == "2") %>%
   ggplot(aes(ctopp_c_raw)) +
   geom_histogram(binwidth = 5, 
                  color = "black",
                  fill = "lightblue") +
   xlim(0, 80) +
-  scale_y_continuous(expand = expand_scale(mult = c(0, .1))) +
+  scale_y_continuous(limits = c(0, 14),
+                     expand = expand_scale(mult = c(0, .1))) +
   labs(title = "Color Fluency - Second",
        x = "Color Naming (s)",
        y = "# of Students") +
@@ -318,12 +325,26 @@ ggsave("ctoppc_second.pdf")
 
 ```
 
+```{r ctopp hist pdfs}
+ctoppc <- ggarrange(c1, c2, c3,
+                  ncol = 1,
+                  nrow = 3,
+                  legend = "none")
+ggsave("ctoppc_hist_all.pdf", ctoppc)
+
+ctoppl <- ggarrange(l1, l2, l3,
+                  ncol = 1,
+                  nrow = 3,
+                  legend = "none")
+ggsave("ctoppl_hist_all.pdf", ctoppl)
+```
+
 
 # TOWRE Histograms
 Norms from chart on page 85
 
 ```{r swe kindergarten}
-b_clean %>% 
+swe1 <- b_clean %>% 
   filter(grade == "K") %>%
   ggplot(aes(swe_raw)) +
   geom_histogram(binwidth = 5, 
@@ -336,9 +357,10 @@ b_clean %>%
     geom_vline(aes(xintercept = 42),
             color="black", linetype="dashed", size = 0.5) +
   xlim(0, 80) +
-  scale_y_continuous(expand = expand_scale(mult = c(0, .1))) +
+  scale_y_continuous(limits = c(0, 6),
+                     expand = expand_scale(mult = c(0, .1))) +
   labs(title = "Sight Word Fluency - Kindergarten",
-       x = "# of Sight Words Read in 45 seconds)",
+       x = "",
        y = "# of Students") +
   theme_classic()
 
@@ -346,7 +368,7 @@ ggsave("swe_k.pdf")
 ```
 
 ```{r pde kindergarten}
-b_clean %>% 
+pde1 <- b_clean %>% 
   filter(grade == "K") %>%
   ggplot(aes(pde_raw)) +
   geom_histogram(binwidth = 5, 
@@ -359,9 +381,10 @@ b_clean %>%
   geom_vline(aes(xintercept = 22),
              color="black", linetype="dashed", size = 0.5) +
   xlim(0, 80) +
-  scale_y_continuous(expand = expand_scale(mult = c(0, .1))) +
+ scale_y_continuous(limits = c(0, 6),
+                     expand = expand_scale(mult = c(0, .1))) +
   labs(title = "Pseudoword Fluency - Kindergarten",
-       x = "# of Pseudowords read in 45 seconds",
+       x = "",
        y = "# of Students") +
   theme_classic()
 
@@ -370,7 +393,7 @@ ggsave("pde_k.pdf")
 ### First grade TOWRE histograms
 
 ```{r swe first}
-b_clean %>% 
+swe2 <- b_clean %>% 
   filter(grade == "1") %>%
   ggplot(aes(swe_raw)) +
   geom_histogram(binwidth = 5, 
@@ -383,9 +406,10 @@ b_clean %>%
     geom_vline(aes(xintercept = 66),
             color="black", linetype="dashed", size = 0.5) +
   xlim(0, 80) +
-  scale_y_continuous(expand = expand_scale(mult = c(0, .1))) +
+  scale_y_continuous(limits = c(0, 6),
+                     expand = expand_scale(mult = c(0, .1))) +
   labs(title = "Sightword Fluency - First Grade",
-       x = "# of Sight Words Read in 45 seconds)",
+       x = "",
        y = "# of Students") +
   theme_classic()
 
@@ -393,7 +417,7 @@ ggsave("swe_first.pdf")
 ```
 
 ```{r pde first}
-b_clean %>% 
+pde2 <- b_clean %>% 
   filter(grade == "1") %>%
   ggplot(aes(pde_raw)) +
   geom_histogram(binwidth = 5, 
@@ -406,9 +430,10 @@ b_clean %>%
   geom_vline(aes(xintercept = 38),
              color="black", linetype="dashed", size = 0.5) +
   xlim(0, 80) +
-  scale_y_continuous(expand = expand_scale(mult = c(0, .1))) +
+  scale_y_continuous(limits = c(0, 6),
+                     expand = expand_scale(mult = c(0, .1))) +
   labs(title = "Pseudoword Fluency - First Grade",
-       x = "# of Pseudowords read in 45 seconds",
+       x = "",
        y = "# of Students") +
   theme_classic()
 
@@ -416,7 +441,7 @@ ggsave("pde_first.pdf")
 ```
 
 ```{r swe second}
-b_clean %>% 
+swe3 <- b_clean %>% 
   filter(grade == "2") %>%
   ggplot(aes(swe_raw)) +
   geom_histogram(binwidth = 5, 
@@ -429,9 +454,10 @@ b_clean %>%
     geom_vline(aes(xintercept = 68),
             color="black", linetype="dashed", size = 0.5) +
   xlim(0, 80) +
-  scale_y_continuous(expand = expand_scale(mult = c(0, .1))) +
+  scale_y_continuous(limits = c(0, 6),
+                     expand = expand_scale(mult = c(0, .1))) +
   labs(title = "Sight Word Fluency - Second Grade",
-       x = "# of Sight Words Read in 45 seconds)",
+       x = "# of Sight Words Read in 45 seconds",
        y = "# of Students") +
   theme_classic()
 
@@ -439,7 +465,7 @@ ggsave("swe_second.pdf")
 ```
 
 ```{r pde second}
-b_clean %>% 
+pde3 <- b_clean %>% 
   filter(grade == "2") %>%
   ggplot(aes(pde_raw)) +
   geom_histogram(binwidth = 5, 
@@ -452,7 +478,8 @@ b_clean %>%
   geom_vline(aes(xintercept = 38),
              color="black", linetype="dashed", size = 0.5) +
   xlim(0, 80) +
-  scale_y_continuous(expand = expand_scale(mult = c(0, .1))) +
+  scale_y_continuous(limits = c(0, 6),
+                     expand = expand_scale(mult = c(0, .1))) +
   labs(title = "Pseudoword Fluency - Second Grade",
        x = "# of Pseudowords read in 45 seconds",
        y = "# of Students") +
@@ -460,6 +487,21 @@ b_clean %>%
 
 ggsave("pde_second.pdf")
 ```
+
+```{r}
+swe <- ggarrange(swe1, swe2, swe3,
+                  ncol = 1,
+                  nrow = 3,
+                  legend = "none")
+ggsave("swe_hist_all.pdf", swe)
+
+pde <- ggarrange(pde1, pde2, pde3,
+                 ncol = 1,
+                 nrow = 3,
+                 legend = "none")
+ggsave("pde_hist_all.pdf", pde)
+```
+
 
 
 
@@ -643,6 +685,56 @@ ggplot(b_clean, aes(wj_raw)) +
 
 ggsave("wj_density_all.pdf")
 ```
+### Letter Word ID by Grade
+
+```{r letter word id hist}
+b_clean %>% 
+  filter(grade == "K") %>%
+  ggplot(aes(wj_raw)) +
+  geom_histogram(binwidth = 5, 
+                 color = "black",
+                 fill = "lightblue") +
+  xlim(0, 70) +
+  scale_y_continuous(limits = c(0, 10),
+                     breaks = c(2, 4, 6, 8, 10),
+                     expand = expand_scale(mult = c(0, .1))) +
+  labs(title = "Letter-Word ID - K",
+       x = "",
+       y = "# of Students") +
+  theme_classic()
+
+b_clean %>% 
+  filter(grade == "1") %>%
+  ggplot(aes(wj_raw)) +
+  geom_histogram(binwidth = 5, 
+                 color = "black",
+                 fill = "lightblue") +
+  xlim(0, 70) +
+  scale_y_continuous(limits = c(0, 10),
+                     breaks = c(2, 4, 6, 8, 10),
+                     expand = expand_scale(mult = c(0, .1))) +
+  labs(title = "Letter-Word ID - 1",
+       x = "",
+       y = "# of Students") +
+  theme_classic()
+
+
+b_clean %>% 
+  filter(grade == "2") %>%
+  ggplot(aes(wj_raw)) +
+  geom_histogram(binwidth = 5, 
+                 color = "black",
+                 fill = "lightblue") +
+  xlim(0, 70) +
+  scale_y_continuous(limits = c(0, 10),
+                     breaks = c(2, 4, 6, 8, 10),
+                     expand = expand_scale(mult = c(0, .1))) +
+  labs(title = "Letter-Word ID - 2",
+       x = "# Correct",
+       y = "# of Students") +
+  theme_classic()
+```
+
 
 # Correlation Matrix
 
@@ -713,4 +805,9 @@ corrplot(raw_matrix,
          tl.col = "black")
 ```
 
+```{r}
+b_clean %>% 
+  group_by(grade) %>% 
+  summarise(n = n())
+```
 
