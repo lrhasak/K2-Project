@@ -1,0 +1,379 @@
+---
+title: "Match to Sample Analysis"
+author: "Lindsey Hasak"
+date: "2/12/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library("knitr")      # for knitting RMarkdown 
+library("kableExtra") # for making nice tables
+library("magrittr")   # for going all in with the pipe
+library("dplyr")
+library("webshot")    # for taking pictures of html
+library("tidyverse")  # for wrangling, plotting, etc. 
+```
+
+Text here to separate code chunk
+
+```{r combine csv, messages = FALSE, warning = FALSE}
+# list directory where data files are stored
+mydir = "MtS_Data"
+
+# get a list of all file names in that folder
+myfiles = list.files(path = mydir,  pattern="*.csv", full.names=TRUE)
+
+# 
+library(plyr)
+df.mts = ldply(myfiles, read_csv)
+head(df.mts)
+detach("package:plyr", unload=TRUE)
+View(df.mts)
+```
+
+Text here to separate code chunk
+
+```{r clean mts data}
+# view all column names - comment out until needed
+# colnames(df.mts)
+
+# select necessary columns
+df.mts = df.mts %>% 
+  select(corrAns,
+         class_name,
+         key_resp.keys,
+         key_resp.corr,
+         key_resp.rt,
+         participant) %>%
+  select(participant, everything()) %>%            # reorder so participant comes first
+  dplyr::rename(key_press = "key_resp.keys",       # make nicer variable names
+                corr_key = "corrAns",
+                correct = "key_resp.corr",
+                rt = "key_resp.rt",
+                part_id = "participant",
+                stim_class = "class_name")
+
+View(df.mts)
+```
+ 
+Text here to separate code chunk
+ 
+```{r read and clean behavioral data}
+# load the data and indicate how NAs are entered
+b_data <- read_csv("/Users/lindseyhasak/code/K2_Behavioral/K2Behavioral_T1.csv", col_names = TRUE, na = c("N/A"))
+colnames(b_data)
+
+b_clean <- b_data %>% 
+  # rename columns for consistency 
+  dplyr::rename(part_id = participant_id,
+         ctopp_c_raw = ctopp_color_raw,
+         ctopp_c_scale = ctopp_color_scaled,
+         ctopp_l_raw = ctopp_lttr_raw,
+         ctopp_l_scale = ctopp_lttr_scaled,
+         swe_raw = swe_raw2,
+         pde_raw = pde_raw_final,
+         swe_age = twre_scaled_age,
+         pde_age = pde_scaled_age,
+         swe_grade = swe_scaled_grade,
+         pde_grade = pde_scaled_grade,
+         wj_raw = wj_corr_final,
+         wj_age_b = wj_ageeq_basal,
+         wj_grade_b = wj_gradeeq_basal) %>% 
+  # separate age column into year, month, and day columns
+  separate(col = k2_age,
+           into = c("year", "month", "day"),
+           sep = "-") %>% # indicate separating character
+  # separate grade column into grade and months in grade
+  separate(col = k2_grade,
+           into = c("grade", "g_month"),
+           sep = "_") %>% 
+  # reorders grade variable to show in this order for plotting
+  mutate(grade = fct_relevel(grade,
+                             "K", "1", "2")) %>% 
+  # convert most columns to doubles (numeric values)
+  type_convert()
+  
+# now age back as new column in decimals
+b_clean$age <- b_clean$year + (b_clean$month/12) + (b_clean$day/365)
+
+```
+ 
+ Text here to separate code chunk
+
+```{r join csvs by participant to get grade info}
+# figure out which row names are wrong by keeping only matches
+df.mts_grade = inner_join(b_clean, df.mts, by = "part_id")
+df.mts_full = full_join(b_clean, df.mts, by = "part_id")
+unique(df.mts_grade$part_id)
+length(unique(df.mts_grade$part_id)) #46, so we're missing 11
+# missing 204 - 211; 216 - 218, 232,
+
+length(unique(b_clean$part_id))
+length(unique(df.mts$part_id))
+
+# guessiong wrong ones are all the ones with lowercase
+
+length(unique(df.mts_full$part_id)) # - 10 (or 11?) extra
+
+df.mts_full %>%
+  group_by(part_id) %>% 
+  n_distinct()
+
+unique(df.mts_full$part_id)
+```
+
+Text here to separate code chunk
+
+```{r recode wrong participants}
+# NEEDS RECODING IN CAPS in MTS data
+# 204, 205, 206, 207, 208, 209, 210, 216
+
+# recode, then check again
+df.mts = df.mts %>%
+  mutate(part_id = recode(part_id,
+                  "blc_204" = "BLC_204",
+                  "blc_205" = "BLC_205",
+                  "blc_206" = "BLC_206",
+                  "blc_207" = "BLC_207",
+                  "blc_208" = "BLC_208",
+                  "blc_209" = "BLC_209",
+                  "blc_210" = "BLC_210",
+                  "blc_216" = "BLC_216"))
+
+unique(df.mts$part_id)
+
+# based on the way these were read in, guessing blc_119 is BLC_217 and blc_61 is BLC_218 - checking these files showed this is correct
+df.mts = df.mts %>%
+  mutate(part_id = recode(part_id,
+                  "blc_119" = "BLC_217",
+                  "blc_61" = "BLC_218"))
+                  
+unique(df.mts$part_id)
+
+# for some reason BLC_232 was not read in? nope, they were entered as 230, so we have that twice. participant in the BLC 230 file is actually the correct one.
+
+df.mts %>% 
+  filter(part_id == "BLC_230")
+
+# given that there is no way to tell which trials belong to which participant that i know of (i don't want to assume that the first 60 trials are the real blc_230), i'm going to just change the participant id in the raw BLC_232 data file. 
+```
+ 
+ Text here to separate code chunk
+
+```{r join for real}
+# join data frames
+df.mts_grade = left_join(df.mts, b_clean, by = "part_id")
+
+# check length of unique ids (should be 57)
+length(unique(df.mts_grade$part_id))
+
+# select relevant columns
+df.mts_acc = df.mts_grade %>% 
+  select(part_id,
+         stim_class,
+         correct,
+         rt,
+         grade,
+         g_month,
+         age) %>% 
+  mutate(trial_n = row_number() - 1) %>% 
+  select(trial_n, part_id, stim_class, everything())
+
+View(df.mts_acc)
+```
+ 
+ Text here to separate code chunk
+
+```{r summary analysis}
+# df for accuracy
+mts_acc =  df.mts_acc %>% 
+  group_by(part_id, stim_class, grade) %>% 
+  dplyr::summarise(mean_correct = round(mean(correct, na.rm = T), 2)) %>% 
+  select(part_id, grade, everything()) %>% 
+  pivot_wider(names_from = stim_class,
+              values_from = mean_correct) %>% 
+  rename("OIN_Acc" = "OIN",
+         "OLN_Acc" = "OLN",
+         "PF_Acc" = "PF",
+         "W_Acc" = "W")
+
+# filter out all trials with RTs greater than 5s. I checked before, and there were only 14                                    trials with RTs in between 5 and 10s, so I think those can be considered outliers
+
+df.mts_acc %>%
+  filter(trial_n %% 5 != 0,
+         correct == 1,
+         rt < 5) %>%  
+  group_by(part_id, stim_class) %>%
+  mutate(mean_rt = mean(rt),
+            mean_sd = sd(rt)) %>%
+  ungroup() %>% 
+  filter(rt < (3*(mean_sd))) %>%
+  pull(rt) %>% 
+  max() # double check these steps - max rt is now 3s, which is about right 
+```
+
+```{r python ready dataframe}
+# DF FOR PYTHON ANALYSIS 
+mts_rt = df.mts_acc %>%
+  filter(trial_n %% 5 != 0,
+        correct == 1,
+         rt < 5) %>%  
+  group_by(part_id, stim_class) %>%
+  mutate(mean_rt = mean(rt),
+            mean_sd = sd(rt)) %>% # fine until here
+  ungroup() %>% 
+  group_by(part_id, stim_class) %>% 
+  filter(rt < (mean_rt + 3*(mean_sd)) | rt > (mean_rt - 3*(mean_sd))) %>% 
+  ungroup() %>% 
+  select(part_id,
+         grade,
+         age,
+         everything())
+
+
+# code for wide table 
+# %>%
+#   group_by(part_id, stim_class, grade, age) %>%
+#   summarise(mean_rt = mean(mean_rt))
+# 
+# %>% 
+#   pivot_wider(names_from = stim_class,
+#               values_from = mean_rt) 
+
+# View(mts_rt)
+# mts_acc
+```
+
+
+```{r mts table}
+# join into one
+mts_grade = full_join(mts_acc, mts_rt, by = c("part_id", "grade")) %>% 
+  rename("OIN_RT" = "OIN",
+         "OLN_RT" = "OLN",
+         "PF_RT" = "PF",
+         "W_RT" = "W")
+
+# save it
+kable(mts_grade,
+      digits = 2) %>% 
+  kable_styling(bootstrap_options = c("striped", "hover"), full_width = F) %>% 
+  save_kable(file = "mts_all_part.html", self_contained = T)
+  
+# pdf version
+webshot("file:///Users/lindseyhasak/code/K2_Behavioral/Match%20to%20Sample/mts_grade.html", "mts_all_part.pdf")
+```
+ 
+```{r}
+# summaries by grade
+mts_grade %>% 
+  group_by(grade) %>% 
+  summarise(OIN_Acc = mean(OIN_Acc),
+            OLN_Acc = mean(OLN_Acc),
+            PF_Acc = mean(PF_Acc),
+            W_Acc = mean(W_Acc),
+            OIN_RT = mean(OIN_RT),
+            OLN_RT = mean(OLN_RT),
+            PF_RT = mean(PF_RT),
+            W_RT = mean(W_RT)) %>% 
+  kable(digits = 2) %>% 
+  kable_styling(bootstrap_options = c("striped", "hover"), full_width = F) %>% 
+  save_kable(file = "mts_grade.html", self_contained = T)
+
+webshot("file:///Users/lindseyhasak/code/K2_Behavioral/Match%20to%20Sample/mts_grade.html", "mts_grade.pdf")
+
+mts_grade %>% 
+  filter(grade == "K")
+# blc_225, blc_235, blc_237
+
+mts_grade %>% 
+  filter(grade == "1")
+# all good
+
+mts_grade %>% 
+  filter(grade == "2")
+# blc_236
+
+df.mts %>% 
+  filter(part_id == "BLC_236")
+# two breaks happened to come on OLN
+```
+ 
+```{r rt boxplots}
+# make df for plotting
+df.rt_plot = mts_rt %>% 
+  pivot_longer(OIN:W,
+               names_to = "stim_class",
+               values_to = "rt")
+
+rt_boxplot = ggplot(df.rt_plot, aes(stim_class, rt), fill = grade) +
+  geom_boxplot(aes(fill = grade),
+               alpha = 0.5) +
+  labs(title = "Match to Sample RT",
+       x = "Grade",
+       y = "RT") +
+  ylim(0, 3) +
+  theme_classic()
+
+ggsave("rt_box.pdf", rt_boxplot)
+
+rt_point = ggplot(df.rt_plot, aes(stim_class, rt, color = grade)) +
+  geom_point(alpha = 0.5,
+             position = position_jitter(width = 0.3, height = 0)) +
+  labs(title = "Match to Sample RT",
+       x = "Grade",
+       y = "RT") +
+  ylim(0, 3) +
+  theme_classic()
+ggsave("rt_point.pdf", rt_point)
+
+```
+
+```{r}
+# acc plots
+df.acc_plot = mts_acc %>% 
+  pivot_longer(OIN_Acc:W_Acc,
+               names_to = "stim_class",
+               values_to = "accuracy")
+
+acc_box = ggplot(df.acc_plot, aes(stim_class, accuracy, fill = grade)) +
+  geom_boxplot(alpha = 0.5) +
+  labs(title = "Match to Sample Accuracy",
+       x = "Grade",
+       y = "Accuracy") +
+  theme_classic()
+
+ggsave("acc_box.pdf", acc_box)
+
+
+acc_point = ggplot(df.acc_plot, aes(stim_class, accuracy, color = grade)) +
+  geom_point(alpha = 0.5,
+             position = position_jitter(width = 0.3, height = 0)) +
+  labs(title = "Match to Sample Accuracy",
+       x = "Grade",
+       y = "Accuracy") +
+  # ylim(0, 3) +
+  theme_classic()
+
+ggsave("acc_point.pdf", acc_point)
+
+which.min(mts_grade$OIN_Acc) # blc 235
+```
+
+```{r rt scatterplot}
+# make df for plotting
+colnames(df.rt_plot)
+df.mts_acc
+
+ggplot(df.rt_plot, aes(age, rt, color = stim_class)) +
+  geom_point() +
+  theme_classic()
+```
+ 
+```{r}
+mts_grade %>% 
+  filter(grade == "K")
+```
+ 
+ 
