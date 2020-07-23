@@ -55,7 +55,7 @@ b_clean <- b_data %>%
   # convert most columns to doubles (numeric values)
   type_convert()
   
-# now age back as new column in decimals
+# now age back as new column in decimals - base r
 b_clean$age <- b_clean$year + (b_clean$month/12) + (b_clean$day/365)
 
 # and finally look at data structure
@@ -83,10 +83,11 @@ b_clean_descr <- b_clean %>%
   # puts age first
   select(age, everything())
 
-# put output in a nice table
+# put output in a nice table - describe function is from psych
 b_clean_descr <- data.frame(describe(b_clean_descr))
 
 # kable is a simple table generator
+# https://cran.r-project.org/web/packages/kableExtra/vignettes/awesome_table_in_html.html
 kable(b_clean_descr, 
       digits = 3, # 3 digits (or however many you want)
       format = "html", 
@@ -138,9 +139,9 @@ h_cl1 <- ggplot(b_clean, aes(ctopp_l_raw)) +
                  color = "black",
                  fill = "white") +
   geom_density(aes(fill = grade), alpha = 0.3) +
-  stat_summary(fun.y = "mean",
-               geom = "line",
-               color = "blue") +
+  #stat_summary(fun.y = "mean",
+               # geom = "line",
+               # color = "blue") +
   
     # geom_vline(data = b_clean, aes(xintercept = mean(na.omit(ctopp_l_raw)),
     #         color = grade), linetype="dashed", size=1) +
@@ -355,7 +356,6 @@ labs(x = "letter naming (seconds)",
      y = "probability of a student obtaining this score") +
   xlim(0, 85) +
   theme_classic()
-
 
 
 ?scale_color_discrete
